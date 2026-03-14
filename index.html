@@ -1,0 +1,3405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#161b22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PCT Translator">
+<meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Parallel Corpus Translator v2.2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ── TOKENS ── */
+:root {
+  --bg:#0d1117; --bg2:#0a0d12;
+  --surface:#161b22; --surface2:#1c2128; --surface3:#222830;
+  --border:#2d333b; --border2:#373e47;
+  --text:#cdd9e5; --text2:#768390; --text3:#444c56;
+  --accent:#4caf91; --accent-dim:rgba(76,175,145,.15); --accent-glow:rgba(76,175,145,.07);
+  --gold:#e3b341; --gold-dim:rgba(227,179,65,.14);
+  --blue:#79c0ff; --blue-dim:rgba(121,192,255,.12);
+  --red:#f47067; --red-dim:rgba(244,112,103,.12);
+  --purple:#bc8cff; --purple-dim:rgba(188,140,255,.12);
+  --r:8px; --r2:12px; --r3:16px;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+}
+[data-theme="light"] {
+  --bg:#f6f8fa; --bg2:#ffffff;
+  --surface:#ffffff; --surface2:#f0f3f6; --surface3:#e8ecf0;
+  --border:#d0d7de; --border2:#b9c0c9;
+  --text:#1f2328; --text2:#57606a; --text3:#9198a1;
+  --accent:#1a7f64; --accent-dim:rgba(26,127,100,.12); --accent-glow:rgba(26,127,100,.06);
+  --gold:#9a6700; --gold-dim:rgba(154,103,0,.1);
+  --blue:#0969da; --blue-dim:rgba(9,105,218,.1);
+  --red:#cf222e; --red-dim:rgba(207,34,46,.1);
+  --purple:#8250df; --purple-dim:rgba(130,80,223,.1);
+  --shadow:0 4px 16px rgba(0,0,0,.12);
+}
+
+*{box-sizing:border-box;margin:0;padding:0
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+html,body{height:100%;overflow:hidden;position:fixed;width:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;transition:background .2s,color .2s}
+
+/* ── LAYOUT ── */
+/* iOS Safari fix: use -webkit-fill-available instead of 100vh */
+.shell{
+  display:flex;flex-direction:column;
+  height:100vh;height:-webkit-fill-available;
+  max-height:100vh;max-height:-webkit-fill-available;
+}
+html{height:-webkit-fill-available}
+
+
+/* ── TOPBAR ── */
+.topbar{
+  height:52px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;padding:0 16px;flex-shrink:0;
+  position:relative;z-index:50;
+}
+.logo{
+  font-family:var(--mono);font-size:13px;font-weight:600;
+  color:var(--accent);letter-spacing:.5px;white-space:nowrap;flex-shrink:0;
+}
+.logo em{color:var(--text3);font-style:normal;font-weight:400}
+
+.desktop-tabs{display:flex;gap:2px;margin-left:4px}
+.tab{
+  padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;
+  cursor:pointer;color:var(--text2);border:none;background:none;
+  font-family:var(--font);transition:all .15s;white-space:nowrap;
+}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.active{color:var(--accent);background:var(--accent-dim)}
+.tab-badge{
+  display:inline-block;background:var(--surface3);color:var(--text3);
+  font-size:10px;font-weight:700;border-radius:999px;padding:0 5px;margin-left:3px;
+}
+.tab.active .tab-badge{background:var(--accent-dim);color:var(--accent)}
+
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.model-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:999px;padding:4px 12px;
+  font-family:var(--mono);font-size:11px;color:var(--text2);
+  cursor:pointer;transition:border-color .15s;
+  white-space:nowrap;
+}
+.model-pill:hover{border-color:var(--accent);color:var(--text)}
+.model-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+.theme-toggle-wrap{display:flex;align-items:center;gap:6px}
+.theme-icon{font-size:14px;line-height:1}
+.toggle-pill{
+  width:38px;height:22px;border-radius:11px;
+  border:1px solid var(--border2);background:var(--surface3);
+  cursor:pointer;position:relative;flex-shrink:0;
+  transition:background .25s,border-color .25s;outline:none;padding:0;
+}
+.toggle-pill::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--text3);transition:left .25s,background .25s;
+}
+[data-theme="light"] .toggle-pill::after{left:19px;background:var(--accent)}
+
+.btn{
+  border:none;border-radius:var(--r);padding:7px 14px;
+  font-family:var(--font);font-size:12px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;white-space:nowrap;
+
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.btn:hover{opacity:.82}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(244,112,103,.25)}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(227,179,65,.25)}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:6px}
+
+/* ── MOBILE NAV ── */
+.mobile-nav{
+  height:56px;
+  min-height:56px;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:none;
+  align-items:center;
+  justify-content:space-around;
+  flex-shrink:0;
+  /* Ensure it sits above iOS home indicator */
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.mob-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 12px;background:none;border:none;
+  color:var(--text3);font-size:10px;font-weight:600;
+  cursor:pointer;font-family:var(--font);transition:color .15s;
+  flex:1;
+
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.mob-icon{font-size:18px;line-height:1}
+.mob-btn.active,.mob-btn:hover{color:var(--accent)}
+.mob-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.5);z-index:98;
+}
+
+@media(max-width:768px){
+  .desktop-tabs{display:none}
+  .mobile-nav{display:flex !important}
+  .logo em{display:none}
+  .model-pill span.model-label{display:none}
+  .panel{padding:14px}
+  .phrase-grid{grid-template-columns:1fr}
+  .stats-row{flex-wrap:wrap}
+  .stat-card{min-width:calc(50% - 5px);flex:none}
+  .section-hdr{flex-direction:column;align-items:flex-start;gap:10px}
+  .section-hdr .btn-row{width:100%;display:flex;gap:6px}
+  .topbar{padding:0 12px;gap:8px}
+  .builder-layout{grid-template-columns:1fr}
+  .builder-drop-zone{grid-template-columns:1fr}
+}
+@media(min-width:769px){.mobile-nav{display:none}}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow:hidden;min-height:0}
+.panel{
+  overflow-y:auto;padding:20px;
+  height:100%;display:none;
+}
+.panel.active{display:block}
+
+/* ── SECTION HEADERS ── */
+.section-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px}
+.section-title{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3)}
+.section-desc{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+
+/* ── STATS ROW ── */
+.stats-row{display:flex;gap:10px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 18px;flex:1}
+.stat-val{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--accent);line-height:1}
+.stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+/* ── CORPUS BUILDER TAB ── */
+.builder-layout{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:16px;margin-bottom:20px;
+}
+.builder-drop-zone{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.builder-pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.builder-pane-hdr{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:space-between;
+}
+.builder-pane-title{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+.builder-drop{
+  min-height:120px;padding:20px;text-align:center;
+  border:2px dashed var(--border2);border-radius:var(--r);margin:14px;
+  cursor:pointer;transition:border-color .2s,background .2s;
+}
+.builder-drop:hover,.builder-drop.dragover{border-color:var(--accent);background:var(--accent-glow)}
+.builder-drop-icon{font-size:28px;margin-bottom:8px}
+.builder-drop-text{font-size:12px;color:var(--text2);line-height:1.5}
+.builder-content{padding:14px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.7;max-height:300px;overflow-y:auto;white-space:pre-wrap}
+.builder-preview{max-height:280px;overflow-y:auto;padding:0 14px 14px}
+.pair-preview{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-bottom:6px}
+.pp-en{font-size:11px;color:var(--text2);margin-bottom:4px}
+.pp-pdt{font-size:12px;color:var(--accent);font-weight:600}
+.pp-del{float:right;background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px}
+.pp-del:hover{color:var(--red)}
+.builder-actions{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.builder-status{font-size:11px;color:var(--text2);flex:1}
+
+/* ── CORPUS TAB ── */
+.corpus-upload{
+  background:var(--surface);border:2px dashed var(--border2);border-radius:var(--r2);
+  padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;
+}
+.corpus-upload:hover,.corpus-upload.dragover{border-color:var(--accent);background:var(--accent-glow)}
+.pair-list{display:flex;flex-direction:column;gap:6px}
+.pair-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 14px;display:grid;grid-template-columns:1fr 1fr auto;
+  gap:12px;align-items:start;
+}
+.pair-card.verified{border-left:3px solid var(--accent)}
+.pair-card.auto{border-left:3px solid var(--blue)}
+.pair-lang{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:3px}
+.pair-text{font-size:12px;line-height:1.5;color:var(--text)}
+.pair-text.pdt{color:var(--accent);font-weight:500}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-chip{
+  padding:4px 12px;border-radius:999px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1px solid var(--border2);background:none;
+  color:var(--text2);font-family:var(--font);transition:all .15s;
+
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.filter-chip.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.search-input{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
+  color:var(--text);font-family:var(--font);font-size:12px;
+  padding:5px 11px;outline:none;width:200px;
+}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--text3)}
+
+/* ── PHRASE LIBRARY ── */
+.phrase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:6px}
+.phrase-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:8px 12px;display:flex;align-items:center;gap:8px;
+}
+.phrase-en{flex:1;font-size:12px;color:var(--text2)}
+.phrase-arrow{color:var(--text3);font-size:11px;flex-shrink:0}
+.phrase-pdt{flex:1;font-size:12px;font-weight:600;color:var(--accent);font-family:var(--mono)}
+.phrase-conf{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:600;flex-shrink:0}
+.conf-verified{background:var(--accent-dim);color:var(--accent)}
+.conf-auto{background:var(--blue-dim);color:var(--blue)}
+.conf-suggested{background:var(--gold-dim);color:var(--gold)}
+
+/* ── TRANSLATOR ── */
+.translator-layout{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:16px;
+  height:calc(100vh - 160px);
+  height:calc(100dvh - 160px);
+}
+.trans-pane{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);
+  display:flex;flex-direction:column;overflow:hidden;min-height:0;
+}
+.trans-pane-hdr{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.trans-pane-title{font-family:var(--mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
+.trans-textarea{
+  flex:1;background:transparent;border:none;
+  color:var(--text);font-family:var(--font);font-size:13px;line-height:1.7;
+  padding:14px;resize:none;outline:none;min-height:0;
+}
+.trans-textarea::placeholder{color:var(--text3)}
+.trans-footer{
+  padding:8px 14px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+
+/* ── PREPROCESSOR ── */
+.preprocessor{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);
+  margin-bottom:14px;overflow:hidden;
+}
+.preprocessor-hdr{
+  padding:8px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;
+}
+.preprocessor-hdr:hover{background:var(--surface2)}
+.preprocessor-body{padding:10px 14px;display:none}
+.preprocessor-body.open{display:block}
+.match-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--accent-glow);border:1px solid rgba(76,175,145,.2);
+  border-radius:999px;padding:2px 9px;font-size:11px;margin:2px;
+}
+.match-en{color:var(--text2)}
+.match-pdt{color:var(--accent);font-family:var(--mono);font-weight:600}
+
+/* ── PROMPT ── */
+.prompt-scroll{flex:1;overflow-y:auto;padding:14px}
+.prompt-box{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
+  padding:12px;font-family:var(--mono);font-size:11px;line-height:1.6;
+  color:var(--text2);white-space:pre-wrap;margin-bottom:12px;
+}
+.workflow-box{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
+  padding:12px 14px;margin-bottom:12px;
+}
+.workflow-step{font-size:12px;color:var(--text2);line-height:1.8}
+.workflow-step strong{color:var(--accent)}
+.paste-label{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:6px}
+.ai-response-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
+  color:var(--text);font-family:var(--font);font-size:12px;padding:10px 12px;
+  outline:none;resize:vertical;min-height:100px;line-height:1.6;
+}
+.ai-response-input:focus{border-color:var(--accent)}
+
+/* ── REVIEW ── */
+.review-controls{
+  display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;
+  padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
+}
+.toggle-group{display:flex;background:var(--surface3);border-radius:6px;padding:2px;gap:2px}
+.toggle-btn{
+  padding:4px 11px;border-radius:4px;font-size:11px;font-weight:600;
+  cursor:pointer;border:none;background:none;color:var(--text2);
+  font-family:var(--font);transition:all .15s;
+}
+.toggle-btn.active{background:var(--accent-dim);color:var(--accent)}
+.segment{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:6px;overflow:hidden;
+}
+.segment.approved{border-left:3px solid var(--accent)}
+.segment.corrected{border-left:3px solid var(--gold)}
+.segment.pending{border-left:3px solid var(--border)}
+.segment-hdr{
+  padding:7px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface2);gap:8px;flex-wrap:wrap;
+}
+.seg-num{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0}
+.seg-actions{display:flex;gap:5px;margin-left:auto}
+.segment-body{padding:10px 12px}
+.seg-en{font-size:12px;color:var(--text2);margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid var(--border);line-height:1.6}
+.seg-pdt{font-size:13px;color:var(--text);line-height:1.7}
+.seg-edit{
+  width:100%;background:var(--surface2);border:1px solid var(--accent);
+  border-radius:6px;color:var(--text);font-family:var(--font);font-size:13px;
+  padding:7px 10px;line-height:1.7;resize:vertical;outline:none;min-height:60px;
+}
+.seg-status{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;flex-shrink:0}
+.status-approved{background:var(--accent-dim);color:var(--accent)}
+.status-corrected{background:var(--gold-dim);color:var(--gold)}
+.status-pending{background:var(--surface3);color:var(--text3)}
+
+/* ── QUEUE ── */
+.queue-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:14px;margin-bottom:8px;
+}
+.queue-card-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:12px}
+.queue-title{font-size:13px;font-weight:600;line-height:1.4}
+.queue-meta{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px}
+.queue-actions{display:flex;gap:6px;flex-shrink:0}
+.queue-progress{height:3px;background:var(--surface3);border-radius:999px;overflow:hidden}
+.queue-bar{height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+
+/* ── MODALS ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.modal-overlay.hidden{display:none}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r3);width:100%;max-width:540px;padding:24px;
+  box-shadow:var(--shadow);
+}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:16px}
+.field{margin-bottom:12px}
+.field label{display:block;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:5px}
+.field input,.field select,.field textarea{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);color:var(--text);font-family:var(--font);
+  font-size:13px;padding:7px 11px;outline:none;transition:border-color .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:70px;line-height:1.6}
+.field select option{background:var(--surface2)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+/* ── MODEL PICKER MODAL ── */
+.model-option{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
+  padding:12px 16px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:12px;
+  transition:border-color .15s;
+}
+.model-option:hover{border-color:var(--accent)}
+.model-option.selected{border-color:var(--accent);background:var(--accent-glow)}
+.model-name{font-weight:600;font-size:13px}
+.model-desc{font-size:11px;color:var(--text2);margin-top:2px}
+.model-check{margin-left:auto;color:var(--accent);font-size:16px}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:70px;right:16px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:9px 14px;font-size:12px;font-weight:600;
+  z-index:999;opacity:0;transform:translateY(6px);transition:all .25s;pointer-events:none;
+  max-width:280px;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-color:rgba(76,175,145,.4);color:var(--accent)}
+.toast.err{border-color:rgba(244,112,103,.4);color:var(--red)}
+.toast.inf{border-color:rgba(121,192,255,.4);color:var(--blue)}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:12px}
+.empty-msg{font-size:13px;line-height:1.6;color:var(--text2)}
+
+/* ── MISC ── */
+mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;padding:0 2px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.mono{font-family:var(--mono)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── ALIGNMENT STUDIO ── */
+.align-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:flex;align-items:center;justify-content:center;padding:8px}
+.align-overlay.hidden{display:none}
+.align-modal{
+  background:var(--surface);border-radius:var(--r3);
+  width:100%;max-width:1200px;
+  height:88vh;max-height:88vh;
+  height:88dvh;max-height:88dvh;
+  display:flex;flex-direction:column;
+  border:1px solid var(--border2);overflow:hidden;box-shadow:var(--shadow);
+}
+.align-hdr{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:8px;flex-shrink:0;flex-wrap:wrap;
+}
+.align-title{font-size:13px;font-weight:700;line-height:1.3}
+.align-hint{font-size:11px;color:var(--text2);margin-top:2px;display:none}
+.align-body{flex:1;overflow:auto;padding:10px 12px;-webkit-overflow-scrolling:touch}
+.align-ftr{
+  padding:10px 12px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;flex-shrink:0;flex-wrap:wrap;
+}
+.a-pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.a-pill-green{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(76,175,145,.3)}
+.a-pill-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(244,112,103,.3)}
+.a-info{background:var(--blue-dim);border:1px solid rgba(121,192,255,.2);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;line-height:1.5;color:var(--text2)}
+/* Table: fixed layout so columns stay 50/50 and never overflow */
+/* Alignment grid — div rows, not a table, so cells match height */
+.a-hdr{display:grid;grid-template-columns:28px 22px 1fr 28px 22px 1fr 28px;gap:4px;padding:0 0 6px;margin-bottom:2px}
+.a-hdr-cell{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:0 4px}
+.a-hdr-cell.ac{text-align:center}
+.a-row{display:grid;grid-template-columns:28px 22px 1fr 28px 22px 1fr 28px;gap:4px;margin-bottom:4px;align-items:stretch}
+.a-num{display:flex;align-items:flex-start;justify-content:center;padding-top:9px;font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+.a-cell{
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:7px 9px;font-size:12px;line-height:1.5;
+  word-break:break-word;overflow-wrap:break-word;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  min-height:38px;max-height:130px;
+}
+.a-cell.ok{border-color:rgba(76,175,145,.3);background:rgba(76,175,145,.04)}
+.a-cell.bad{border-color:rgba(244,112,103,.35);background:rgba(244,112,103,.07)}
+.a-cell.empty{color:var(--text3);font-style:italic}
+.a-cell.pdt{color:var(--accent)}
+.a-del{text-align:center;vertical-align:top;padding:6px 2px 0;white-space:nowrap;width:28px}
+.a-del button{
+  background:var(--red-dim);border:1px solid rgba(244,112,103,.25);
+  color:var(--red);border-radius:4px;width:22px;height:22px;
+  cursor:pointer;font-size:12px;line-height:1;padding:0;flex-shrink:0;
+}
+.a-del button:hover{background:var(--red);color:#fff}
+
+/* ── MATCHER ─────────────────────────────────────────── */
+.matcher-tokens{display:flex;flex-wrap:wrap;gap:5px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);min-height:44px}
+.m-token{
+  display:inline-flex;align-items:center;
+  padding:4px 9px;border-radius:999px;font-size:12px;
+  border:1px solid var(--border2);background:var(--surface3);
+  color:var(--text);cursor:pointer;user-select:none;
+  transition:all .15s;font-family:var(--font);
+}
+.m-token:hover{border-color:var(--accent);color:var(--accent)}
+.m-token.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:600}
+.m-token.linked{font-weight:600;border-width:2px}
+.m-token.linked.selected{opacity:0.7}
+.matcher-link-card{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;margin-bottom:5px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);font-size:12px;
+}
+.matcher-link-en{color:var(--text)}
+.matcher-link-arr{color:var(--text3);font-size:11px}
+.matcher-link-tgt{color:var(--accent);font-family:var(--mono);font-weight:600}
+.matcher-link-del{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px}
+.matcher-link-del:hover{color:var(--red)}
+.a-move{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:flex-start;padding:3px 1px 0;width:22px;flex-shrink:0}
+.a-move button{background:var(--surface3);border:1px solid var(--border2);color:var(--text2);border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:1;padding:0;flex-shrink:0;transition:background .15s,color .15s}
+.a-move button:hover{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.a-move button:disabled{opacity:.25;cursor:default}
+@media(min-width:769px){.a-move{display:none!important}}
+@media(max-width:768px){.a-grip{display:none!important}}
+.a-info-mobile{display:none}
+@media(max-width:768px){.a-info-desktop{display:none}.a-info-mobile{display:inline}}
+.a-grip{
+  display:inline-block;margin-right:5px;
+  color:var(--text3);cursor:grab;font-size:13px;
+  vertical-align:middle;user-select:none;
+  transition:color .15s;
+}
+.a-grip:hover{color:var(--text2)}
+.a-cell[draggable]{cursor:default}
+.a-cell.a-dragging{opacity:0.4;border-style:dashed}
+.a-cell.a-drop-above{border-top:2px solid var(--accent)!important}
+.a-cell.a-drop-below{border-bottom:2px solid var(--accent)!important}
+@media(max-width:768px){
+  .align-overlay{padding:env(safe-area-inset-top,8px) 0 env(safe-area-inset-bottom,8px)}
+  .align-modal{
+    height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    max-height:none;border-radius:0;
+  }
+  .a-cell{font-size:11px;padding:6px 8px;max-height:100px}
+  .align-ftr{padding:8px 10px}
+  .align-ftr .btn{padding:8px 10px;font-size:12px}
+}
+
+
+/* ── MOBILE TRANSLATOR — declared LAST so cascade wins ── */
+@media(max-width:768px){
+  .trans-step{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface);border-bottom:2px solid var(--accent);
+    padding:10px 14px;font-family:var(--mono);font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1px;color:var(--accent);flex-shrink:0;
+  }
+  .trans-step .step-back{
+    margin-left:auto;font-size:18px;cursor:pointer;color:var(--text3);
+    background:none;border:none;padding:0;line-height:1;
+  }
+  .translator-layout{
+    display:block !important;
+    height:auto !important;
+    width:100%;
+  }
+  .trans-pane{
+    width:100% !important;
+    box-sizing:border-box;
+    min-height:0;
+    margin-bottom:0;
+  }
+  .trans-pane.right-pane{ display:none !important; }
+  .trans-pane.right-pane.mob-show{
+    display:flex !important;
+    flex-direction:column;
+    width:100% !important;
+    box-sizing:border-box;
+  }
+  .trans-pane.left-pane.mob-hide{ display:none !important; }
+  .trans-textarea{ min-height:200px;max-height:45vh;resize:vertical; }
+  .right-pane .prompt-scroll{ max-height:none;overflow:visible; }
+  .right-pane #reviewView{ max-height:none;overflow:visible; }
+}
+
+/* SUGGESTION CARDS */
+.sugg-section{background:var(--gold-dim);border:1px solid rgba(227,179,65,.35);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px}
+.sugg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.sugg-hdr-left{display:flex;align-items:center;gap:8px}
+.sugg-title{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
+.sugg-count{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.sugg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px}
+.sugg-card:last-child{margin-bottom:0}
+.sugg-main{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.sugg-en{font-size:13px;font-weight:600;color:var(--text)}
+.sugg-arr{color:var(--text3);font-size:11px;flex-shrink:0}
+.sugg-tgt{font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono)}
+.sugg-conf-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.sugg-bar{width:60px;height:5px;background:var(--surface3);border-radius:999px;overflow:hidden;flex-shrink:0}
+.sugg-bar-fill{height:100%;border-radius:999px;transition:width .3s}
+.sugg-pct{font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0;min-width:30px;text-align:right}
+.sugg-meta{font-size:11px;color:var(--text3);margin-bottom:5px}
+.sugg-example{font-size:11px;color:var(--text2);font-style:italic;border-left:2px solid var(--border2);padding-left:8px;margin-bottom:8px;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sugg-actions{display:flex;gap:6px}
+.sugg-actions button{padding:4px 12px;font-size:11px;font-weight:600;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .15s}
+.sugg-approve{border-color:rgba(76,175,145,.4)!important;color:var(--accent)!important}
+.sugg-approve:hover{background:var(--accent-dim)!important}
+.sugg-reject:hover{background:var(--red-dim)!important;color:var(--red)!important;border-color:rgba(244,112,103,.4)!important}
+.sugg-min-note{font-size:11px;color:var(--text3);text-align:center;padding:8px;font-style:italic}
+
+/* DANGER ZONE in settings */
+.danger-zone{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.danger-zone-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:10px;font-family:var(--mono)}
+.danger-zone p{font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5}
+#resetConfirmRow{display:none;margin-top:8px;gap:8px}
+</style>
+<!-- PDF.js for in-browser PDF parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px">v2.2</em></div>
+
+    <div class="desktop-tabs">
+      <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
+      <button class="tab active" onclick="switchTab('corpus')" id="tab-corpus">Corpus <span class="tab-badge" id="badge-corpus">0</span></button>
+      <button class="tab" onclick="switchTab('phrases')" id="tab-phrases">Phrases <span class="tab-badge" id="badge-phrases">0</span></button>
+      <button class="tab" onclick="switchTab('matcher')" id="tab-matcher">🧩 Matcher</button>
+      <button class="tab" onclick="switchTab('translator')" id="tab-translator">Translator</button>
+      <button class="tab" onclick="switchTab('queue')" id="tab-queue">Queue <span class="tab-badge" id="badge-queue">0</span></button>
+    </div>
+
+    <div class="topbar-right">
+      <!-- Model picker -->
+      <div class="model-pill" onclick="openModal('modelModal')" title="Change model">
+        <div class="model-dot"></div>
+        <span class="model-label" id="modelLabel">Claude</span>
+      </div>
+
+      <!-- Theme toggle -->
+      <div class="theme-toggle-wrap">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+        <button class="toggle-pill" onclick="toggleTheme()" title="Light / Dark"></button>
+      </div>
+
+      <button class="btn btn-ghost btn-sm" onclick="exportAll()">⬇ Export</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Language settings">⚙</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ══ BUILDER TAB ══ -->
+    <div class="panel" id="panel-builder">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Corpus Builder</div>
+          <div class="section-desc">
+            Drop a <strong>folder</strong> to process multiple HTML pairs at once, or drop/upload <strong>individual files</strong>.
+            Files must be named <span class="mono" style="font-size:11px">1_en.html</span> + <span class="mono" style="font-size:11px">1_pdt.html</span> for folder mode.
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" onclick="clearBuilder()">Clear</button>
+          <button class="btn btn-primary btn-sm" id="pushCorpusBtn" onclick="pushToCorpus()" disabled>Push to Corpus →</button>
+        </div>
+      </div>
+
+      <!-- Mode toggle -->
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button id="builderModeManual" class="filter-chip active" onclick="switchBuilderMode('manual')">📄 Files / EPUB</button>
+        <button id="builderModeFolder" class="filter-chip" onclick="switchBuilderMode('folder')">📁 Folder Scan</button>
+      </div>
+
+      <!-- MANUAL SECTION: single files + EPUB -->
+      <div id="builderManualSection">
+
+        <div id="builderDropZone" class="builder-drop-zone"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleBuilderDrop(event);this.classList.remove('dragover')">
+
+          <label class="corpus-upload" style="cursor:pointer;padding:16px 12px;display:block">
+            <div style="font-size:24px;margin-bottom:6px">📄</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Choose 2 Files</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.5">Select one EN and one target HTML file for a single article</div>
+            <input type="file" id="builderFileInput" multiple accept=".html,.htm" style="position:absolute;width:1px;height:1px;opacity:0" onchange="handleFileInputChange(event)">
+          </label>
+
+        </div>
+
+        <div id="epubDropZone" class="builder-drop-zone" style="grid-template-columns:1fr;margin-top:6px">
+          <label class="corpus-upload" style="cursor:pointer;padding:16px 12px;display:block">
+            <div style="font-size:24px;margin-bottom:6px">📗</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Choose 2 EPUBs</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.5">Select one English and one target-language EPUB — paragraphs extracted automatically</div>
+            <input type="file" id="builderEpubInput" multiple accept=".epub" style="position:absolute;width:1px;height:1px;opacity:0" onchange="handleEpubInputChange(event)">
+          </label>
+        </div>
+
+      </div><!-- /builderManualSection -->
+
+      <!-- FOLDER SECTION: batch folder scan -->
+      <div id="builderFolderSection" style="display:none">
+
+        <div class="builder-drop-zone" style="grid-template-columns:1fr;margin-bottom:6px"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleBuilderDrop(event);this.classList.remove('dragover')">
+          <label class="corpus-upload" style="cursor:pointer;padding:16px 12px;display:block">
+            <div style="font-size:24px;margin-bottom:6px">📁</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Choose Folder</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.5">Scans for <span class="mono" style="font-size:10px">*_en.html</span> + <span class="mono" style="font-size:10px">*_pdt.html</span> pairs — select which to process</div>
+            <input type="file" id="builderFolderInput" webkitdirectory multiple accept=".html,.htm" style="position:absolute;width:1px;height:1px;opacity:0" onchange="handleFolderSelect(event)">
+          </label>
+        </div>
+
+        <div id="folderScanStatus" style="font-size:12px;color:var(--text2);padding:4px 2px;min-height:18px"></div>
+        <div id="folderPairList" style="margin-top:6px"></div>
+        <div style="margin-top:8px;text-align:right">
+          <button id="processFolderBtn" class="btn btn-primary btn-sm" onclick="processFolderPairs()" disabled>Process Selected →</button>
+        </div>
+
+      </div><!-- /builderFolderSection -->
+
+      <!-- Detected pairs list (shown after upload) -->
+      <div id="builderPairsSection" style="display:none">
+        <div class="section-hdr" style="margin-bottom:10px">
+          <div>
+            <div class="section-title">Detected Pairs</div>
+            <div class="section-desc" id="builderPairsDesc">—</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-ghost btn-sm" onclick="toggleAllBuilderPairs(true)">Select All</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleAllBuilderPairs(false)">Deselect All</button>
+          </div>
+        </div>
+        <div id="builderPairsList"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span id="builderPushStatus" style="font-size:12px;color:var(--text2)">—</span>
+          <button class="btn btn-primary btn-sm" style="margin-left:auto" id="pushCorpusBtn2" onclick="pushToCorpus()" disabled>Push to Corpus →</button>
+        </div>
+      </div>
+
+      <!-- Alignment review (shown after processing) -->
+      <div id="alignSection" style="display:none">
+        <div class="divider"></div>
+        <div class="section-hdr" style="margin-bottom:10px">
+          <div>
+            <div class="section-title">Alignment Review</div>
+            <div class="section-desc" id="alignDesc">—</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="autoAlign()">Re-align</button>
+        </div>
+        <div id="alignPairs"></div>
+        <div class="builder-actions" style="padding:10px 0;display:flex;align-items:center;gap:8px">
+          <span class="builder-status" id="builderStatus" style="font-size:12px;color:var(--text2);flex:1">—</span>
+        </div>
+      </div>
+
+    </div><!-- /panel-builder -->
+
+    <!-- ══ CORPUS TAB ══ -->
+    <div class="panel active" id="panel-corpus">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Translation Corpus</div>
+          <div class="section-desc">Verified parallel sentence pairs. Load a jw_corpus.txt or build pairs in the Builder tab.</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('addPairModal')">+ Add Pair</button>
+          <label class="btn btn-primary btn-sm" style="cursor:pointer">⬆ Load .txt<input type="file" id="corpusFileInput" accept=".txt,.json" style="position:absolute;width:1px;height:1px;opacity:0" onchange="loadCorpusFile(event)"></label>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="statPairs">0</div><div class="stat-lbl">Pairs</div></div>
+        <div class="stat-card"><div class="stat-val" id="statArticles">0</div><div class="stat-lbl">Articles</div></div>
+        <div class="stat-card"><div class="stat-val" id="statPhrases">0</div><div class="stat-lbl">Phrases</div></div>
+        <div class="stat-card"><div class="stat-val" id="statVerified">0</div><div class="stat-lbl">Verified</div></div>
+      </div>
+
+      <div id="corpusUploadZone" class="corpus-upload"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleCorpusDrop(event)"
+        >
+        <div style="font-size:30px;margin-bottom:10px">📄</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Load jw_corpus.txt</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Drag and drop or click. Or build pairs in the Builder tab.</div>
+        <label class="btn btn-primary btn-sm" style="cursor:pointer">Choose File<input type="file" accept=".txt,.json" style="position:absolute;width:1px;height:1px;opacity:0" onchange="loadCorpusFile(event)"></label>
+      </div>
+
+      <div id="corpusFilterBar" class="filter-bar" style="display:none">
+        <input type="text" class="search-input" placeholder="Search pairs…" oninput="_pairSearch=this.value.toLowerCase();renderPairList()" id="pairSearch">
+      </div>
+      <div class="pair-list" id="pairList"></div>
+    </div>
+
+    <!-- ══ PHRASES TAB ══ -->
+    <div class="panel" id="panel-phrases">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Phrase & Pattern Library</div>
+          <div class="section-desc">Word pairs extracted from corpus + verified terms. Pre-processes every translation.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('addPhraseModal')">+ Add Phrase</button>
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" class="search-input" placeholder="Search phrases…" oninput="_phraseSearch=this.value.toLowerCase();renderPhrases()">
+        <button class="filter-chip active" onclick="setPhraseFilter('all',this)">All</button>
+        <button class="filter-chip" onclick="setPhraseFilter('verified',this)">✅ Verified</button>
+        <button class="filter-chip" onclick="setPhraseFilter('auto',this)">🔵 Auto</button>
+        <button class="filter-chip" onclick="setPhraseFilter('suggested',this)">🟡 Suggested</button>
+        <button class="filter-chip" onclick="setPhraseFilter('religious',this)">⛪ Religious</button>
+        <button class="filter-chip" onclick="setPhraseFilter('grammar',this)">📐 Grammar</button>
+        <button class="filter-chip" onclick="setPhraseFilter('common',this)">💬 Common</button>
+      </div>
+
+      <div id="suggestionsSection" style="display:none"></div>
+      <div class="phrase-grid" id="phraseGrid"></div>
+    </div>
+
+    <!-- ══ TRANSLATOR TAB ══ -->
+    <div class="panel" id="panel-translator">
+
+      <!-- Pre-processor bar -->
+      <div class="preprocessor" id="preprocessorPanel" style="display:none">
+        <div class="preprocessor-hdr" onclick="togglePreprocessor()">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="section-title">Pre-processor</span>
+            <span id="matchCount" style="font-size:11px;color:var(--accent)">0 matches</span>
+          </div>
+          <span id="preChevron" style="color:var(--text3);font-size:11px">▼</span>
+        </div>
+        <div class="preprocessor-body" id="preprocessorBody">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:7px">Locked phrase mappings — injected into prompt:</div>
+          <div id="matchList"></div>
+        </div>
+      </div>
+
+      <div class="translator-layout">
+        <!-- LEFT: English input -->
+        <div class="trans-pane left-pane" id="transPane1">
+          <div class="trans-step" id="transStep1">Step 1 · Write</div>
+          <div class="trans-pane-hdr">
+            <span class="trans-pane-title">English Source</span>
+            <div style="display:flex;gap:5px">
+              <button class="btn btn-ghost btn-sm" onclick="clearInput()">Clear</button>
+              <button class="btn btn-primary btn-sm" onclick="buildPrompt()">Build Prompt →</button>
+            </div>
+          </div>
+          <textarea class="trans-textarea" id="sourceInput" placeholder="Paste English article text here…"></textarea>
+          <div class="trans-footer">
+            <span style="font-size:11px;color:var(--text3)" id="wordCount">0 words</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="runPreprocessor()">Analyze</button>
+          </div>
+        </div>
+
+        <!-- RIGHT: Prompt / Review -->
+        <div class="trans-pane right-pane">
+          <div class="trans-step" id="transStep2">Step 2 · Prompt<button class="step-back" onclick="mobBack()" title="Back">‹</button></div>
+          <div class="trans-pane-hdr">
+            <span class="trans-pane-title" id="rightPaneTitle">Translation Prompt</span>
+            <div style="display:flex;gap:5px">
+              <button class="btn btn-ghost btn-sm" id="toggleReviewBtn" onclick="toggleReviewMode()" style="display:none">⬅ Back</button>
+              <button class="btn btn-primary btn-sm" id="copyPromptBtn" onclick="copyPrompt()">Copy Prompt</button>
+            </div>
+          </div>
+
+          <!-- PROMPT VIEW -->
+          <div id="promptView" class="prompt-scroll">
+            <div id="promptBox" class="prompt-box">Build a prompt by clicking "Build Prompt" after pasting your English text.</div>
+            <div class="workflow-box">
+              <div style="font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:8px">Workflow</div>
+              <div class="workflow-step">
+                1 · Paste English → Analyze<br>
+                2 · Build Prompt → Copy<br>
+                3 · Paste into <strong id="modelName">Claude</strong><br>
+                4 · Paste response below → Review<br>
+                5 · Approve segments → Save
+              </div>
+            </div>
+            <div class="paste-label">Paste AI Response</div>
+            <textarea id="aiResponseInput" class="ai-response-input" placeholder="Paste the target language translation from your AI here…"></textarea>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%" onclick="enterReviewMode()">Enter Review Mode →</button>
+          </div>
+
+          <!-- REVIEW VIEW -->
+          <div id="reviewView" style="display:none;flex:1;overflow-y:auto;padding:14px">
+            <div class="review-controls">
+              <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3)">GRANULARITY</span>
+              <div class="toggle-group">
+                <button class="toggle-btn active" onclick="setGranularity('paragraph',this)">Paragraph</button>
+                <button class="toggle-btn" onclick="setGranularity('sentence',this)">Sentence</button>
+              </div>
+              <div style="margin-left:auto;display:flex;gap:5px">
+                <button class="btn btn-ghost btn-sm" onclick="approveAll()">Approve All</button>
+                <button class="btn btn-primary btn-sm" onclick="saveTranslation()">Save</button>
+              </div>
+            </div>
+            <div id="segmentList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ QUEUE TAB ══ -->
+    <div class="panel" id="panel-queue">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Review Queue</div>
+          <div class="section-desc">Completed translations — approved and pending review.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearApproved()">Clear Approved</button>
+      </div>
+      <div id="queueList"></div>
+    </div>
+
+
+
+    <!-- ══ MATCHER TAB ══ -->
+    <div class="panel" id="panel-matcher">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">🧩 Phrase Matcher</div>
+          <div class="section-desc" id="matcherSource">Open a pair from the Corpus tab to begin — tap 🧩 on any pair card.</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" onclick="clearMatcher()">Clear</button>
+          <button class="btn btn-primary btn-sm" id="matcherExtractBtn" onclick="extractMatcherPhrases()" disabled>⬇ Extract Phrases</button>
+        </div>
+      </div>
+
+      <div id="matcherEmpty" style="display:none;text-align:center;padding:40px 20px;color:var(--text3);font-size:13px">
+        No pair loaded.<br>Go to <strong>Corpus</strong> and tap 🧩 on any sentence pair.
+      </div>
+
+      <div id="matcherWorkspace" style="display:none">
+        <!-- EN tokens -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">English</div>
+          <div id="matcherEnTokens" class="matcher-tokens"></div>
+        </div>
+        <!-- Target tokens -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px" id="matcherTargetLabel">Target</div>
+          <div id="matcherTgtTokens" class="matcher-tokens"></div>
+        </div>
+
+        <!-- Action bar -->
+        <div id="matcherActionBar" style="display:none;position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 0;gap:8px;align-items:center;flex-wrap:wrap">
+          <span id="matcherSelDesc" style="font-size:12px;color:var(--text2);flex:1">Select tokens on both sides then Link</span>
+          <button class="btn btn-ghost btn-sm" onclick="clearMatcherSel()">Clear sel.</button>
+          <button class="btn btn-primary btn-sm" id="matcherLinkBtn" onclick="linkMatcherSel()" disabled>Link ↔</button>
+        </div>
+
+        <!-- Linked pairs preview -->
+        <div id="matcherLinkedSection" style="display:none;margin-top:16px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Linked Pairs</div>
+          <div id="matcherLinkedList"></div>
+        </div>
+      </div>
+    </div><!-- /panel-matcher -->
+
+  </div><!-- /content -->
+
+  <!-- MOBILE NAV -->
+  <div class="mobile-nav">
+    <button class="mob-btn" onclick="switchTab('builder')" id="mob-builder"><span class="mob-icon">🔨</span>Builder</button>
+    <button class="mob-btn" onclick="switchTab('corpus')" id="mob-corpus"><span class="mob-icon">📚</span>Corpus</button>
+    <button class="mob-btn active" onclick="switchTab('phrases')" id="mob-phrases"><span class="mob-icon">📖</span>Phrases</button>
+    <button class="mob-btn" onclick="switchTab('matcher')" id="mob-matcher"><span class="mob-icon">🧩</span>Matcher</button>
+    <button class="mob-btn" onclick="switchTab('translator')" id="mob-translator"><span class="mob-icon">✍️</span>Translate</button>
+    <button class="mob-btn" onclick="switchTab('queue')" id="mob-queue"><span class="mob-icon">✅</span>Queue</button>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- MODEL PICKER MODAL -->
+<div class="modal-overlay hidden" id="modelModal">
+  <div class="modal">
+    <div class="modal-title">Select AI Model</div>
+    <div id="modelOptions">
+      <div class="model-option" onclick="setModel('claude',this)">
+        <div><div class="model-name">Claude</div><div class="model-desc">Best for nuanced religious language. Follows structured prompts precisely.</div></div>
+        <span class="model-check" id="mc-claude">✓</span>
+      </div>
+      <div class="model-option" onclick="setModel('gpt',this)">
+        <div><div class="model-name">ChatGPT / GPT-4</div><div class="model-desc">Strong multilingual capabilities. Good for longer articles.</div></div>
+        <span class="model-check" id="mc-gpt" style="display:none">✓</span>
+      </div>
+      <div class="model-option" onclick="setModel('gemini',this)">
+        <div><div class="model-name">Gemini</div><div class="model-desc">Large context window. Good for full article translation in one pass.</div></div>
+        <span class="model-check" id="mc-gemini" style="display:none">✓</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeModal('modelModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PAIR MODAL -->
+<div class="modal-overlay hidden" id="addPairModal">
+  <div class="modal">
+    <div class="modal-title">Add Corpus Pair</div>
+    <div class="field"><label>English</label><textarea id="newPairEn" placeholder="English sentence…"></textarea></div>
+    <div class="field"><label><span data-lang="target">Target Language</span></label><textarea id="newPairPdt" placeholder="Translation…"></textarea></div>
+    <div class="field"><label>Article / Source</label><input type="text" id="newPairArticle" placeholder="e.g. Prayer article"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addPairModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewPair()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PHRASE MODAL -->
+<div class="modal-overlay hidden" id="addPhraseModal">
+  <div class="modal">
+    <div class="modal-title">Add Phrase / Term</div>
+    <div class="field"><label>English</label><input type="text" id="newPhraseEn" placeholder="English word or phrase…"></div>
+    <div class="field"><label><span data-lang="target">Target Language</span></label><input type="text" id="newPhrasePdt" placeholder="Target equivalent…"></div>
+    <div class="field"><label>Category</label>
+      <select id="newPhraseCategory">
+        <option value="religious">Religious / Biblical</option>
+        <option value="grammar">Grammar Pattern</option>
+        <option value="common">Common Word</option>
+        <option value="proper">Proper Noun</option>
+      </select>
+    </div>
+    <div class="field"><label>Confidence</label>
+      <select id="newPhraseConf">
+        <option value="verified">Verified — native speaker confirmed</option>
+        <option value="suggested">Suggested — needs review</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addPhraseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewPhrase()">Add</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT PAIR MODAL -->
+<div class="modal-overlay hidden" id="editPairModal">
+  <div class="modal">
+    <div class="modal-title">Edit Corpus Pair</div>
+    <input type="hidden" id="editPairId">
+    <div class="field"><label>English</label><textarea id="editPairEn"></textarea></div>
+    <div class="field"><label><span data-lang="target">Target Language</span></label><textarea id="editPairPdt"></textarea></div>
+    <div class="field"><label>Article / Source</label><input type="text" id="editPairArticle"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('editPairModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditedPair()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PHRASE MODAL -->
+<div class="modal-overlay hidden" id="editPhraseModal">
+  <div class="modal">
+    <div class="modal-title">Edit Phrase</div>
+    <input type="hidden" id="editPhraseId">
+    <div class="field"><label>English</label><input type="text" id="editPhraseEn"></div>
+    <div class="field"><label><span data-lang="target">Target Language</span></label><input type="text" id="editPhrasePdt"></div>
+    <div class="field"><label>Category</label>
+      <select id="editPhraseCategory">
+        <option value="religious">Religious / Biblical</option>
+        <option value="grammar">Grammar Pattern</option>
+        <option value="common">Common Word</option>
+        <option value="proper">Proper Noun</option>
+        <option value="auto">Auto-extracted</option>
+      </select>
+    </div>
+    <div class="field"><label>Confidence</label>
+      <select id="editPhraseConf">
+        <option value="verified">Verified — native speaker confirmed</option>
+        <option value="suggested">Suggested — needs review</option>
+        <option value="auto">Auto-extracted</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('editPhraseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditedPhrase()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ALIGNMENT STUDIO MODAL -->
+<div class="align-overlay hidden" id="alignOverlay">
+  <div class="align-modal">
+    <div class="align-hdr">
+      <div style="flex:1;min-width:0">
+        <div class="align-title" id="alignTitle">Alignment Studio</div>
+        <div class="align-hint">Remove paragraphs from either side until EN and PDT counts match, then Accept &amp; Push to Corpus.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span class="a-pill a-pill-red" id="alignPill">Mismatch</span>
+        <button class="btn btn-ghost btn-sm" onclick="closeAlignStudio()">&#x2715;</button>
+      </div>
+    </div>
+    <div class="align-body" id="alignBody"></div>
+    <div class="align-ftr">
+      <div style="font-size:12px;color:var(--text2)">
+        EN: <strong id="alignEnN">0</strong> &nbsp;&middot;&nbsp; PDT: <strong id="alignPdtN">0</strong>
+        &nbsp;&nbsp;<span id="alignProgress" style="color:var(--text3);font-family:var(--mono);font-size:11px"></span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="skipAlignArticle()">&#x23ED; Skip</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeAlignStudio()">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="alignAcceptBtn" onclick="acceptAlign()" disabled>&#x2705; Accept &amp; Push</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+var LS_KEY = 'pct_v1';
+var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
+var _granularity = 'paragraph';
+var _segments = [];
+var _preMatches = [];
+var _phraseFilter = 'all';
+var _phraseSearch = '';
+var _pairSearch = '';
+var _preOpen = false;
+var _builderEn = [];   // parsed paragraphs from EN html
+var _builderPdt = [];  // parsed paragraphs from PDT html
+var _builderPairs = []; // aligned pairs ready to push
+var _builderArticle = '';
+var _alignQueue  = [];  // articles being processed by alignment studio
+var _alignIdx    = 0;   // current index in _alignQueue
+var _alignTotals = {};  // running totals across the batch
+
+// ── SEED GLOSSARY ─────────────────────────────────────────────────────────────
+// Phrase seeds: empty in v1.0 — user builds per language
+var SEEDS = [];
+
+// ── DEFAULT PROFILE (empty — wizard sets on first launch) ─────────────────────
+var DEFAULT_PROFILE = {
+  targetName: '',
+  nativeName: '',
+  iso: '',
+  hintEn: '_E_',
+  hintTarget: '',
+  rtl: false
+};
+
+// ── PROFILE FUNCTIONS ─────────────────────────────────────────────────────────
+function applyProfile() {
+  var p = (APP.profile && APP.profile.targetName) ? APP.profile : null;
+  var tName = p ? p.targetName : 'Target';
+  var slug = p ? (p.iso || tName.toLowerCase().replace(/\s+/g,'-')) : 'pct';
+  // Update logo
+  var logo = document.getElementById('appLogo');
+  if (logo) {
+    var code = slug.substring(0,3).toUpperCase();
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.1</em>';
+  }
+  // Update page title
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.1';
+  // Update all [TARGET_LANG] labels throughout the UI
+  document.querySelectorAll('[data-lang="target"]').forEach(function(el){
+    el.textContent = tName;
+  });
+  // Update placeholder on PDF section
+  var pdfDesc = document.getElementById('pdfHintDesc');
+  if (pdfDesc && p) {
+    var hint = p.hintTarget || '???';
+    var hintEn = p.hintEn || '_E_';
+    pdfDesc.textContent = 'e.g. mwb' + hintEn + '202607.pdf + mwb_' + hint + '_202607.pdf';
+  }
+  // RTL support on target text areas / displays
+  var rtl = p && p.rtl;
+  document.querySelectorAll('[data-lang-dir="target"]').forEach(function(el){
+    el.dir = rtl ? 'rtl' : 'ltr';
+    el.style.textAlign = rtl ? 'right' : '';
+  });
+}
+
+function getTargetName() {
+  return (APP.profile && APP.profile.targetName) ? APP.profile.targetName : 'Target Language';
+}
+
+function getIso() {
+  return (APP.profile && APP.profile.iso) ? APP.profile.iso : 'pct';
+}
+
+function getPdfHints() {
+  var p = APP.profile || {};
+  return { en: p.hintEn || '_E_', target: p.hintTarget || '' };
+}
+
+// ── WIZARD ────────────────────────────────────────────────────────────────────
+var _wizStep = 1;
+
+function showWizard() {
+  _wizStep = 1;
+  renderWizStep();
+  document.getElementById('wizardOverlay').style.display = 'flex';
+}
+
+function hideWizard() {
+  document.getElementById('wizardOverlay').style.display = 'none';
+}
+
+function wizNav(dir) {
+  if (dir === 1) {
+    // Validate current screen
+    if (_wizStep === 1) {
+      var name = document.getElementById('wizTargetName').value.trim();
+      if (!name) { toast('Enter a target language name','err'); return; }
+    }
+    if (_wizStep === 3) {
+      // Save and apply
+      saveWizard();
+      return;
+    }
+  }
+  _wizStep = Math.max(1, Math.min(3, _wizStep + dir));
+  renderWizStep();
+}
+
+function renderWizStep() {
+  document.getElementById('wizScreen1').style.display = _wizStep === 1 ? '' : 'none';
+  document.getElementById('wizScreen2').style.display = _wizStep === 2 ? '' : 'none';
+  document.getElementById('wizScreen3').style.display = _wizStep === 3 ? '' : 'none';
+  document.getElementById('wizBack').style.display = _wizStep > 1 ? '' : 'none';
+  document.getElementById('wizNext').textContent = _wizStep === 3 ? 'Start Building →' : 'Next →';
+  var steps = ['Step 1 of 3 — Language', 'Step 2 of 3 — PDF Sources', 'Step 3 of 3 — Confirm'];
+  document.getElementById('wizStep').textContent = steps[_wizStep - 1];
+  var titles = ['What language are you translating into?', 'PDF source file hints', 'Ready to start'];
+  document.getElementById('wizTitle').textContent = titles[_wizStep - 1];
+  var descs = [
+    'The tool will be configured for English → your chosen language.',
+    'Optional: helps auto-detect EN vs target PDFs by filename. Skip if using HTML files.',
+    'Review your configuration below.'
+  ];
+  document.getElementById('wizDesc').textContent = descs[_wizStep - 1];
+  if (_wizStep === 3) populateConfirm();
+}
+
+function wizPreview() {
+  // Nothing needed — confirm screen does it
+}
+
+function populateConfirm() {
+  var name = document.getElementById('wizTargetName').value.trim() || '—';
+  var native = document.getElementById('wizNativeName').value.trim() || '—';
+  var iso = document.getElementById('wizIso').value.trim() || '—';
+  var hintEn = document.getElementById('wizHintEn').value.trim() || '_E_';
+  var hintT = document.getElementById('wizHintTarget').value.trim() || '—';
+  document.getElementById('confTarget').textContent = name;
+  document.getElementById('confNative').textContent = native;
+  document.getElementById('confIso').textContent = iso;
+  document.getElementById('confHintEn').textContent = hintEn;
+  document.getElementById('confHintT').textContent = hintT;
+  document.getElementById('confTitle').textContent = name + ' Translator v2.1';
+  var confRtlEl = document.getElementById('confRtl');
+  if (confRtlEl) {
+    var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
+    confRtlEl.textContent = rtlChecked ? 'Yes' : 'No';
+  }
+}
+
+function saveWizard() {
+  APP.profile = {
+    targetName: document.getElementById('wizTargetName').value.trim(),
+    nativeName: document.getElementById('wizNativeName').value.trim(),
+    iso: document.getElementById('wizIso').value.trim().toLowerCase(),
+    hintEn: document.getElementById('wizHintEn').value.trim() || '_E_',
+    hintTarget: document.getElementById('wizHintTarget').value.trim(),
+    rtl: !!(document.getElementById('wizRtl') && document.getElementById('wizRtl').checked)
+  };
+  saveApp();
+  applyProfile();
+  hideWizard();
+  toast('Language set to ' + APP.profile.targetName, 'ok');
+}
+
+// ── SETTINGS PANEL ────────────────────────────────────────────────────────────
+function openSettings() {
+  var p = APP.profile || {};
+  document.getElementById('setTargetName').value = p.targetName || '';
+  document.getElementById('setNativeName').value = p.nativeName || '';
+  document.getElementById('setIso').value = p.iso || '';
+  document.getElementById('setHintEn').value = p.hintEn || '_E_';
+  document.getElementById('setHintTarget').value = p.hintTarget || '';
+  var setRtlEl = document.getElementById('setRtl');
+  if (setRtlEl) setRtlEl.checked = !!p.rtl;
+  var hasData = APP.corpus.length > 0 || APP.phrases.length > 0;
+  document.getElementById('settingsWarn').style.display = hasData ? '' : 'none';
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.add('hidden');
+}
+
+function saveSettings() {
+  var newName = document.getElementById('setTargetName').value.trim();
+  if (!newName) { toast('Target language name required', 'err'); return; }
+  var oldName = APP.profile ? APP.profile.targetName : '';
+  var changed = oldName && oldName !== newName;
+  if (changed && (APP.corpus.length > 0 || APP.phrases.length > 0)) {
+    if (!confirm('Changing language will clear your corpus and phrases. Export first. Continue?')) return;
+    APP.corpus = [];
+    APP.phrases = [];
+    APP.sessions = [];
+  }
+  APP.profile = {
+    targetName: newName,
+    nativeName: document.getElementById('setNativeName').value.trim(),
+    iso: document.getElementById('setIso').value.trim().toLowerCase(),
+    hintEn: document.getElementById('setHintEn').value.trim() || '_E_',
+    hintTarget: document.getElementById('setHintTarget').value.trim(),
+    rtl: !!(document.getElementById('setRtl') && document.getElementById('setRtl').checked)
+  };
+  saveApp();
+  applyProfile();
+  renderCorpus();
+  renderPhrases();
+  renderQueue();
+  updateBadges();
+  closeSettings();
+  toast('Settings saved', 'ok');
+}
+
+function exportProfile() {
+  var profile = APP.profile || {};
+  var data = { profile: profile, phrases: APP.phrases };
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (profile.iso || profile.targetName || 'lang').replace(/\s+/g,'-').toLowerCase() + '_profile.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){document.body.removeChild(a);},100);
+  toast('Profile exported', 'ok');
+}
+
+function importProfile(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (data.profile && data.profile.targetName) {
+        document.getElementById('setTargetName').value = data.profile.targetName || '';
+        document.getElementById('setNativeName').value = data.profile.nativeName || '';
+        document.getElementById('setIso').value = data.profile.iso || '';
+        document.getElementById('setHintEn').value = data.profile.hintEn || '_E_';
+        document.getElementById('setHintTarget').value = data.profile.hintTarget || '';
+        if (data.phrases && data.phrases.length) {
+          if (confirm('Import ' + data.phrases.length + ' phrases from this profile?')) {
+            APP.phrases = data.phrases;
+            saveApp();
+            renderPhrases();
+          }
+        }
+        toast('Profile loaded — save to apply', 'ok');
+      } else {
+        toast('Invalid profile file', 'err');
+      }
+    } catch(err) { toast('Could not read profile', 'err'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  // One-time migration from legacy key (v4.x PDT builds)
+  try {
+    var _legacy = localStorage.getItem('pdtv2');
+    if (_legacy && !localStorage.getItem('pct_v1')) {
+      localStorage.setItem('pct_v1', _legacy);
+    }
+  } catch(e) {}
+  loadApp();
+  loadTheme();
+  updateModelUI();
+  applyProfile();
+  renderCorpus();
+  renderStats();
+  renderPhrases();
+  renderQueue();
+  updateBadges();
+  // Show wizard on first launch (no profile set yet)
+  if (!APP.profile || !APP.profile.targetName) {
+    showWizard();
+  }
+}
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────────
+function saveApp() { try { localStorage.setItem(LS_KEY, JSON.stringify(APP)); } catch(e) {} }
+function loadApp() { try { var s=localStorage.getItem(LS_KEY); if(s) APP=JSON.parse(s); } catch(e) {} if (!APP.suggestions) APP.suggestions=[]; }
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  ['builder','corpus','phrases','matcher','translator','queue'].forEach(function(t) {
+    document.getElementById('panel-'+t).classList.remove('active');
+    document.getElementById('tab-'+t) && document.getElementById('tab-'+t).classList.remove('active');
+    document.getElementById('mob-'+t) && document.getElementById('mob-'+t).classList.remove('active');
+  });
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name==='phrases') { runCoOccurrence(); renderSuggestions(); }
+  if (name==='matcher') { renderMatcher(); }
+  document.getElementById('tab-'+name) && document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('mob-'+name) && document.getElementById('mob-'+name).classList.add('active');
+}
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  document.documentElement.setAttribute('data-theme', isLight ? '' : 'light');
+  document.getElementById('themeIcon').textContent = isLight ? '🌙' : '☀️';
+  try { localStorage.setItem('pdt_theme', isLight ? 'dark' : 'light'); } catch(e) {}
+}
+function loadTheme() {
+  try {
+    var t = localStorage.getItem('pdt_theme');
+    if (t === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeIcon').textContent = '☀️';
+    }
+  } catch(e) {}
+}
+
+// ── MODEL ─────────────────────────────────────────────────────────────────────
+function setModel(m, el) {
+  APP.model = m;
+  saveApp();
+  updateModelUI();
+  closeModal('modelModal');
+  toast('Model set to ' + m, 'ok');
+}
+function updateModelUI() {
+  var names = { claude:'Claude', gpt:'ChatGPT / GPT-4', gemini:'Gemini' };
+  var m = APP.model || 'claude';
+  document.getElementById('modelLabel').textContent = names[m] || 'Claude';
+  var mn = document.getElementById('modelName');
+  if (mn) mn.textContent = names[m] || 'Claude';
+  ['claude','gpt','gemini'].forEach(function(k) {
+    var el = document.getElementById('mc-'+k);
+    if (el) el.style.display = k === m ? '' : 'none';
+  });
+  document.querySelectorAll('.model-option').forEach(function(opt,i) {
+    var keys = ['claude','gpt','gemini'];
+    opt.classList.toggle('selected', keys[i] === m);
+  });
+}
+
+// ── CORPUS BUILDER (unified) ─────────────────────────────────────────────────
+// State
+var _bPairs = [];     // { id, key, article, en, pdt, selected }
+var _bRaw = {};       // { key: { enParas:[], pdtParas:[], enName:'', pdtName:'' } }
+
+// Entry points
+function handleBuilderDrop(e) {
+  e.preventDefault();
+  document.getElementById('builderDropZone').classList.remove('dragover');
+  var items = e.dataTransfer.items;
+  var files = Array.from(e.dataTransfer.files);
+  // Check if any item is a directory
+  var hasDir = false;
+  if (items) {
+    for (var i=0;i<items.length;i++) {
+      var entry = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+      if (entry && entry.isDirectory) { hasDir = true; break; }
+    }
+  }
+  if (hasDir) {
+    // Can't read directories via drag in most browsers — prompt folder picker
+    toast('For folders, use the Choose Folder button', 'inf');
+  } else {
+    processFileList(files);
+  }
+}
+
+function handleFolderInputChange(e) {
+  processFileList(Array.from(e.target.files));
+  e.target.value = '';
+}
+
+function handleFileInputChange(e) {
+  processFileList(Array.from(e.target.files));
+  e.target.value = '';
+}
+
+function processFileList(files) {
+  if (!files.length) return;
+  var htmlFiles = files.filter(function(f){ return /\.html?$/i.test(f.name); });
+  if (!htmlFiles.length) { toast('No HTML files found', 'err'); return; }
+
+  // Group by base key: 1_en.html -> key='1', lang='en'
+  var groups = {};
+  htmlFiles.forEach(function(f) {
+    var m = f.name.match(/^(.+?)_(en|pdt)\.html?$/i);
+    if (!m) return;
+    var key = m[1]; var lang = m[2].toLowerCase();
+    if (!groups[key]) groups[key] = {};
+    groups[key][lang] = f;
+  });
+
+  var pairs = Object.keys(groups).filter(function(k){ return groups[k].en && groups[k].pdt; });
+
+  if (!pairs.length) {
+    // No paired files found — try to handle single-file mode
+    // If exactly 2 files dropped, treat first as EN and second as PDT
+    if (htmlFiles.length === 2) {
+      var key = 'pair_1';
+      groups[key] = { en: htmlFiles[0], pdt: htmlFiles[1] };
+      pairs = [key];
+      toast('2 files detected — treating as EN + PDT pair', 'inf');
+    } else {
+      toast('No matched pairs. Name files like: 1_en.html + 1_pdt.html', 'err');
+      return;
+    }
+  }
+
+  // Show detected pairs UI
+  document.getElementById('builderDropZone').style.display = 'none';
+  document.getElementById('builderPairsSection').style.display = 'block';
+  document.getElementById('alignSection').style.display = 'none';
+
+  _bRaw = {};
+  _bPairs = pairs.map(function(key) {
+    return {
+      id: uid(),
+      key: key,
+      article: key.replace(/[-_]/g,' ').replace(/\w/g,function(c){return c.toUpperCase();}),
+      enFile: groups[key].en,
+      pdtFile: groups[key].pdt,
+      selected: true,
+      processed: false,
+      pairCount: 0
+    };
+  });
+
+  renderBuilderPairsList();
+  toast(pairs.length + ' pair' + (pairs.length!==1?'s':'') + ' detected', 'ok');
+}
+
+function renderBuilderPairsList() {
+  var desc = document.getElementById('builderPairsDesc');
+  var list = document.getElementById('builderPairsList');
+  var status = document.getElementById('builderPushStatus');
+  var btn1 = document.getElementById('pushCorpusBtn');
+  var btn2 = document.getElementById('pushCorpusBtn2');
+
+  var total = _bPairs.length;
+  var sel = _bPairs.filter(function(p){return p.selected;}).length;
+  desc.textContent = total + ' pair' + (total!==1?'s':'') + ' detected · ' + sel + ' selected';
+
+  list.innerHTML = _bPairs.map(function(p, i) {
+    var enName = p.enFile ? p.enFile.name : '—';
+    var pdtName = p.pdtFile ? p.pdtFile.name : '—';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border' + (p.processed?'2':'' ) + ');border-radius:var(--r);margin-bottom:5px;flex-wrap:wrap">' +
+      '<input type="checkbox" id="bp-'+i+'" ' + (p.selected?'checked':'') + ' style="accent-color:var(--accent);flex-shrink:0" onchange="toggleBuilderPair('+i+',this.checked)">' +
+      '<label for="bp-'+i+'" style="font-size:13px;font-weight:600;flex:1;cursor:pointer;min-width:80px">' + esc(p.article) + '</label>' +
+      '<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">' + esc(enName) + ' + ' + esc(pdtName) + '</span>' +
+      (p.processed ? '<span style="font-size:10px;padding:2px 8px;border-radius:999px;background:var(--accent-dim);color:var(--accent);font-weight:600">' + p.pairCount + ' pairs</span>' : '') +
+    '</div>';
+  }).join('');
+
+  var hasSelected = sel > 0;
+  status.textContent = hasSelected ? 'Ready to process ' + sel + ' article' + (sel!==1?'s':'') : 'Select at least one article';
+  btn1.disabled = !hasSelected;
+  btn2.disabled = !hasSelected;
+  updateBadges();
+}
+
+function toggleBuilderPair(i, checked) {
+  _bPairs[i].selected = checked;
+  renderBuilderPairsList();
+}
+
+function toggleAllBuilderPairs(state) {
+  _bPairs.forEach(function(p){ p.selected = state; });
+  renderBuilderPairsList();
+}
+
+function pushToCorpus() {
+  var selected = _bPairs.filter(function(p){ return p.selected; });
+  if (!selected.length) { toast('Select at least one pair', 'inf'); return; }
+
+  document.getElementById('pushCorpusBtn').disabled = true;
+  document.getElementById('pushCorpusBtn2').disabled = true;
+
+  // Store queue in module-level vars so alignment modal can access them
+  _alignQueue  = selected;
+  _alignIdx    = 0;
+  _alignTotals = { added: 0, phrases: 0, processed: 0 };
+
+  document.getElementById('builderPushStatus').textContent = 'Opening alignment studio…';
+  loadAndAlign(_alignIdx);
+}
+
+function loadAndAlign(idx) {
+  if (idx >= _alignQueue.length) {
+    // All done
+    var newSugg=runCoOccurrence();
+    saveApp(); renderCorpus(); renderStats(); renderPhrases(); updateBadges();
+    var t = _alignTotals;
+    document.getElementById('builderPushStatus').textContent =
+      'Done — '+t.added+' pairs added'+(newSugg?' · '+newSugg+' suggestions ready (Phrases tab)':'');
+    document.getElementById('pushCorpusBtn').disabled = false;
+    document.getElementById('pushCorpusBtn2').disabled = false;
+    toast(t.added + ' pairs pushed · ' + t.phrases + ' phrases extracted', 'ok');
+    switchTab('corpus');
+    return;
+  }
+
+  var item = _alignQueue[idx];
+  var enText = '', pdtText = '', readsLeft = 2;
+
+  document.getElementById('builderPushStatus').textContent =
+    'Loading ' + (idx+1) + '/' + _alignQueue.length + ': ' + item.article + '…';
+
+  function onBothRead() {
+    var enDoc  = new DOMParser().parseFromString(enText,  'text/html');
+    var pdtDoc = new DOMParser().parseFromString(pdtText, 'text/html');
+
+    ['script','style','nav','header','footer','aside','figure','noscript'].forEach(function(tag) {
+      enDoc.querySelectorAll(tag).forEach(function(el){ el.remove(); });
+      pdtDoc.querySelectorAll(tag).forEach(function(el){ el.remove(); });
+    });
+
+    function getParas(doc) {
+      var out = [];
+      doc.querySelectorAll('p,h1,h2,h3,h4,h5,li,blockquote').forEach(function(el) {
+        var t = el.textContent.replace(/\s+/g,' ').trim();
+        if (t.length > 12) out.push(t);
+      });
+      return out.filter(function(p,i,a){ return a.indexOf(p) === i; });
+    }
+
+    item.enBlocks  = getParas(enDoc);
+    item.pdtBlocks = getParas(pdtDoc);
+    openAlignStudio(idx);
+  }
+
+  // PDF path: blocks already extracted — skip FileReader entirely
+  if (item.enBlocks && item.enBlocks.length && item.pdtBlocks && item.pdtBlocks.length) {
+    openAlignStudio(idx);
+    return;
+  }
+
+  var r1 = new FileReader();
+  r1.onload = function(e){ enText = e.target.result; if (--readsLeft === 0) onBothRead(); };
+  var r2 = new FileReader();
+  r2.onload = function(e){ pdtText = e.target.result; if (--readsLeft === 0) onBothRead(); };
+  r1.readAsText(item.enFile, 'UTF-8');
+  r2.readAsText(item.pdtFile, 'UTF-8');
+}
+
+function openAlignStudio(idx) {
+  _alignIdx = idx;
+  var item = _alignQueue[idx];
+  document.getElementById('alignTitle').textContent =
+    'Alignment Studio \u2014 ' + item.article;
+  document.getElementById('alignProgress').textContent =
+    '(' + (idx+1) + ' of ' + _alignQueue.length + ')';
+  buildAlignGrid(item.enBlocks, item.pdtBlocks);
+  document.getElementById('alignOverlay').classList.remove('hidden');
+}
+
+function closeAlignStudio() {
+  document.getElementById('alignOverlay').classList.add('hidden');
+}
+
+// ── Alignment drag state ───────────────────────────────────────────────────
+var _dragSide = null;
+var _dragFrom = null;
+
+function buildAlignGrid(en, pdt) {
+  var maxLen  = Math.max(en.length, pdt.length);
+  // Only count rows with actual content — null+null ghost rows are skipped in render
+  var enCount  = en.filter(function(x){ return x !== null && x !== undefined; }).length;
+  var pdtCount = pdt.filter(function(x){ return x !== null && x !== undefined; }).length;
+  var matched  = enCount === pdtCount;
+
+  document.getElementById('alignEnN').textContent  = enCount;
+  document.getElementById('alignPdtN').textContent = pdtCount;
+
+  var pill = document.getElementById('alignPill');
+  var btn  = document.getElementById('alignAcceptBtn');
+  if (matched) {
+    pill.className   = 'a-pill a-pill-green';
+    pill.textContent = 'Matched (' + enCount + ')';
+    btn.disabled = false;
+  } else {
+    pill.className   = 'a-pill a-pill-red';
+    pill.textContent = 'Mismatch  EN:' + enCount + ' / PDT:' + pdtCount;
+    btn.disabled = true;
+  }
+
+  var tgtName = getTargetName();
+  var rows = '<div class="a-info"><span class="a-info-desktop">Drag \u2807 to reorder \u00b7 </span><span class="a-info-mobile">Tap \u2191\u2193 to reorder \u00b7 </span>tap \u2715 to remove. Match EN and PDT counts to unlock Accept &amp; Push.</div>' +
+    '<div class="a-hdr">' +
+    '<div class="a-hdr-cell ac">#</div>' +
+    '<div class="a-hdr-cell"></div>' +
+    '<div class="a-hdr-cell">EN (' + enCount + ')</div>' +
+    '<div class="a-hdr-cell"></div>' +
+    '<div class="a-hdr-cell"></div>' +
+    '<div class="a-hdr-cell">' + tgtName + ' (' + pdtCount + ')</div>' +
+    '<div class="a-hdr-cell"></div>' +
+    '</div>';
+
+  for (var i = 0; i < maxLen; i++) {
+    var et  = (en[i]  !== undefined) ? en[i]  : null;
+    var pt  = (pdt[i] !== undefined) ? pdt[i] : null;
+    if (et === null && pt === null) continue; // skip ghost rows — both sides empty
+    var cls = (et === null || pt === null) ? 'bad' : 'ok';
+
+    var enCell = et !== null
+      ? '<div class="a-cell ' + cls + '" draggable="true"' +
+        ' ondragstart="alignDragStart(event,\'en\',' + i + ')"' +
+        ' ondragover="alignDragOver(event,\'en\',' + i + ')"' +
+        ' ondragleave="alignDragLeave(event)"' +
+        ' ondrop="alignDrop(event,\'en\',' + i + ')"' +
+        ' ondragend="alignDragEnd()">' +
+        '<span class="a-grip">\u2807</span>' + esc(et) + '</div>'
+      : '<div class="a-cell bad empty">(empty)</div>';
+
+    var pdtCell = pt !== null
+      ? '<div class="a-cell ' + cls + ' pdt" draggable="true"' +
+        ' ondragstart="alignDragStart(event,\'pdt\',' + i + ')"' +
+        ' ondragover="alignDragOver(event,\'pdt\',' + i + ')"' +
+        ' ondragleave="alignDragLeave(event)"' +
+        ' ondrop="alignDrop(event,\'pdt\',' + i + ')"' +
+        ' ondragend="alignDragEnd()">' +
+        '<span class="a-grip">\u2807</span>' + esc(pt) + '</div>'
+      : '<div class="a-cell bad empty">(empty)</div>';
+
+    var enMove = et !== null
+      ? '<div class="a-move">' +
+          '<button onclick="moveAlignRow(\'en\',' + i + ',-1)" title="Move up"' + (i===0?' disabled':'') + '>\u2191</button>' +
+          '<button onclick="moveAlignRow(\'en\',' + i + ',1)" title="Move down"' + (i===en.length-1?' disabled':'') + '>\u2193</button>' +
+        '</div>'
+      : '<div class="a-move"></div>';
+    var pdtMove = pt !== null
+      ? '<div class="a-move">' +
+          '<button onclick="moveAlignRow(\'pdt\',' + i + ',-1)" title="Move up"' + (i===0?' disabled':'') + '>\u2191</button>' +
+          '<button onclick="moveAlignRow(\'pdt\',' + i + ',1)" title="Move down"' + (i===pdt.length-1?' disabled':'') + '>\u2193</button>' +
+        '</div>'
+      : '<div class="a-move"></div>';
+
+    rows +=
+      '<div class="a-row" id="arow-' + i + '">' +
+      '<div class="a-num">' + (i+1) + '</div>' +
+      enMove +
+      enCell +
+      '<div class="a-del">' + (et!==null ? '<button onclick="delAlignRow(\'en\',' + i + ')" title="Remove">\u2715</button>' : '') + '</div>' +
+      pdtMove +
+      pdtCell +
+      '<div class="a-del">' + (pt!==null ? '<button onclick="delAlignRow(\'pdt\',' + i + ')" title="Remove">\u2715</button>' : '') + '</div>' +
+      '</div>';
+  }
+  document.getElementById('alignBody').innerHTML = rows;
+}
+
+function alignDragStart(e, side, idx) {
+  _dragSide = side; _dragFrom = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('a-dragging');
+}
+
+function alignDragOver(e, side, idx) {
+  if (side !== _dragSide) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.a-drop-above,.a-drop-below').forEach(function(el){
+    el.classList.remove('a-drop-above','a-drop-below');
+  });
+  var rect = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.classList.add(e.clientY < rect.top + rect.height / 2 ? 'a-drop-above' : 'a-drop-below');
+}
+
+function alignDragLeave(e) {
+  e.currentTarget.classList.remove('a-drop-above','a-drop-below');
+}
+
+function alignDrop(e, side, toIdx) {
+  e.preventDefault();
+  alignDragEnd();
+  if (side !== _dragSide || _dragFrom === null || _dragFrom === toIdx) return;
+  var item = _alignQueue[_alignIdx];
+  var arr  = side === 'en' ? item.enBlocks : item.pdtBlocks;
+  var rect = e.currentTarget.getBoundingClientRect();
+  var insertAt = (e.clientY < rect.top + rect.height / 2) ? toIdx : toIdx + 1;
+  if (insertAt > _dragFrom) insertAt--;
+  arr.splice(insertAt, 0, arr.splice(_dragFrom, 1)[0]);
+  _dragSide = null; _dragFrom = null;
+  buildAlignGrid(item.enBlocks, item.pdtBlocks);
+}
+
+function alignDragEnd() {
+  document.querySelectorAll('.a-dragging,.a-drop-above,.a-drop-below').forEach(function(el){
+    el.classList.remove('a-dragging','a-drop-above','a-drop-below');
+  });
+}
+
+function delAlignRow(side, idx) {
+  var item = _alignQueue[_alignIdx];
+  if (side === 'en') item.enBlocks.splice(idx, 1);
+  else               item.pdtBlocks.splice(idx, 1);
+  buildAlignGrid(item.enBlocks, item.pdtBlocks);
+}
+
+function moveAlignRow(side, idx, dir) {
+  var item = _alignQueue[_alignIdx];
+  var arr  = (side === 'en') ? item.enBlocks : item.pdtBlocks;
+  var to   = idx + dir;
+  if (to < 0 || to >= arr.length) return;
+  var tmp  = arr[idx]; arr[idx] = arr[to]; arr[to] = tmp;
+  buildAlignGrid(item.enBlocks, item.pdtBlocks);
+  // Restore scroll position to the moved row
+  var row = document.getElementById('arow-' + to);
+  if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function acceptAlign() {
+  var item = _alignQueue[_alignIdx];
+  // Compare visible (non-null) counts, same logic as the display pill
+  var enVis  = item.enBlocks.filter(function(x){ return x !== null && x !== undefined; }).length;
+  var pdtVis = item.pdtBlocks.filter(function(x){ return x !== null && x !== undefined; }).length;
+  if (enVis !== pdtVis) {
+    toast('Counts must match before accepting (' + enVis + ' vs ' + pdtVis + ')', 'err'); return;
+  }
+
+  var added = 0;
+  var pairs = [];
+  var maxI = Math.max(item.enBlocks.length, item.pdtBlocks.length);
+  for (var i = 0; i < maxI; i++) {
+    var en  = item.enBlocks[i]  !== undefined ? item.enBlocks[i]  : null;
+    var pdt = item.pdtBlocks[i] !== undefined ? item.pdtBlocks[i] : null;
+    if (!en || !pdt || en === pdt) continue;
+    var exists = APP.corpus.some(function(x){ return x.en===en && x.pdt===pdt; });
+    if (!exists) {
+      APP.corpus.push({ id:uid(), article:item.article, en:en, pdt:pdt, verified:true, added:today() });
+      added++;
+    }
+    pairs.push({ en:en, pdt:pdt });
+  }
+  _alignTotals.added   += added;
+  _alignTotals.phrases += 0; // suggestions via runCoOccurrence at batch end
+  _alignTotals.processed++;
+  item.processed = true;
+  item.pairCount = added;
+
+  document.getElementById('builderPushStatus').textContent =
+    'Processed ' + _alignTotals.processed + '/' + _alignQueue.length +
+    ' \u2014 ' + _alignTotals.added + ' pairs so far';
+  renderBuilderPairsList();
+  closeAlignStudio();
+  loadAndAlign(_alignIdx + 1);
+}
+
+function skipAlignArticle() {
+  var item = _alignQueue[_alignIdx];
+  item.processed = true;
+  item.pairCount = 0;
+  _alignTotals.processed++;
+  renderBuilderPairsList();
+  closeAlignStudio();
+  toast('Skipped \u2014 moving to next', 'inf');
+  loadAndAlign(_alignIdx + 1);
+}
+
+function clearBuilder() {
+  _bPairs = []; _bRaw = {};
+  document.getElementById('builderDropZone').style.display = '';
+  var epubZone = document.getElementById('epubDropZone');
+  if (epubZone) epubZone.style.display = '';
+  document.getElementById('builderPairsSection').style.display = 'none';
+  document.getElementById('alignSection').style.display = 'none';
+  document.getElementById('pushCorpusBtn').disabled = true;
+  var btn2 = document.getElementById('pushCorpusBtn2');
+  if (btn2) btn2.disabled = true;
+  toast('Builder cleared', 'inf');
+}
+
+// autoAlign stub
+function autoAlign(){ toast('Auto-align not yet implemented — use Alignment Studio to match rows manually', 'inf'); }
+
+// ── CORPUS LOADING ────────────────────────────────────────────────────────────
+function loadCorpusFile(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var r = new FileReader();
+  r.onload = function(ev) { parseCorpusTxt(ev.target.result); e.target.value=''; };
+  r.readAsText(file,'UTF-8');
+}
+function handleCorpusDrop(e) {
+  e.preventDefault();
+  document.getElementById('corpusUploadZone').classList.remove('dragover');
+  var file = e.dataTransfer.files[0]; if (!file) return;
+  var r = new FileReader();
+  r.onload = function(ev) { parseCorpusTxt(ev.target.result); };
+  r.readAsText(file,'UTF-8');
+}
+
+function parseCorpusTxt(text) {
+  var lines = text.split('\n');
+  var pairs = []; var currentArticle = 'General'; var en = null, pdt = null;
+  lines.forEach(function(line) {
+    line = line.trim(); if (!line) return;
+    var am = line.match(/^###?\s+(?:ARTICLE:\s+)?(.+?)\s+###?$|^##\s+(.+)$/);
+    if (am) { currentArticle = (am[1]||am[2]).replace(/^ARTICLE:\s*/,''); return; }
+    if (/^(EN|ENGLISH):\s*/i.test(line)) { en = line.replace(/^(EN|ENGLISH):\s*/i,'').trim(); return; }
+    if (/^(PDT|PLAUTDIETSCH):\s*/i.test(line)) { pdt = line.replace(/^(PDT|PLAUTDIETSCH):\s*/i,'').trim(); }
+    if (line === '---' && en && pdt) {
+      var exists = APP.corpus.some(function(p){ return p.en===en&&p.pdt===pdt; });
+      if (!exists) pairs.push({id:uid(),article:currentArticle,en:en,pdt:pdt,verified:true,added:today()});
+      en=null; pdt=null;
+    }
+  });
+  if (en && pdt) pairs.push({id:uid(),article:currentArticle,en:en,pdt:pdt,verified:true,added:today()});
+  if (!pairs.length) { toast('No pairs found — check format', 'err'); return; }
+  APP.corpus = APP.corpus.concat(pairs);
+  saveApp();
+  renderCorpus(); renderStats(); var newSugg=runCoOccurrence(); renderPhrases(); updateBadges();
+  toast('Loaded '+pairs.length+' pairs'+(newSugg?' · '+newSugg+' suggestions queued':''),'ok');
+}
+
+// ── PHRASE EXTRACTION ─────────────────────────────────────────────────────────
+// -- PHRASE SUGGESTIONS: co-occurrence alignment --
+var STOP_EN = new Set(['the','a','an','and','or','but','in','of','to','for','is','are','was',
+  'were','be','been','have','has','had','will','would','could','should','may','might','that',
+  'this','these','those','it','its','he','she','they','we','you','i','my','our','your','their',
+  'his','her','not','with','as','at','by','from','on','all','also','so','if','when','who',
+  'what','which','how','do','did','does','can','us','him','them','up','out','about','into',
+  'over','after','before','now','then','said','say','says','just','more','one','two','each',
+  'very','even','any','back','such','than','only','make','like','know','see','come','get',
+  'give','go','take','use','way','time','day','people','god','lord','man','men','life','love',
+  'help','good','great','new','own','right','long','never','always','still','again','first',
+  'last','here','there','where','why','because','through','among','between','during','every',
+  'many','much','must','need','place','thing','things','put','let','ask','tell','year','years',
+  'work','world','true','show','keep','following','regarding']);
+
+function tokenizeWords(text) {
+  return text.split(/[\s.,!?;:()\[\]{}'"/\\|@#$%^&*+=~<>]+/)
+    .map(function(w){ return w.replace(/^[^\w\u00C0-\u024F]+|[^\w\u00C0-\u024F]+$/g,''); })
+    .filter(function(w){ return w.length >= 3; });
+}
+
+function runCoOccurrence() {
+  if (!APP.suggestions) APP.suggestions = [];
+  if (APP.corpus.length < 10) return 0;
+  var enDocFreq = {}, tgtDocFreq = {}, coFreq = {};
+  APP.corpus.forEach(function(pair) {
+    var enWords  = new Set(tokenizeWords(pair.en).map(function(w){ return w.toLowerCase(); }));
+    var tgtWords = new Set(tokenizeWords(pair.pdt));
+    enWords.forEach(function(w){  enDocFreq[w]  = (enDocFreq[w]||0)  + 1; });
+    tgtWords.forEach(function(w){ tgtDocFreq[w] = (tgtDocFreq[w]||0) + 1; });
+    enWords.forEach(function(ew) {
+      if (STOP_EN.has(ew) || ew.length < 3) return;
+      tgtWords.forEach(function(tw) {
+        if (tw.length < 3) return;
+        var key = ew + '\x00' + tw;
+        coFreq[key] = (coFreq[key]||0) + 1;
+      });
+    });
+  });
+  var existingEn = new Set(APP.phrases.map(function(p){ return p.en.toLowerCase(); }));
+  var pendingEn  = new Set((APP.suggestions||[]).map(function(s){ return s.enKey||s.en.toLowerCase(); }));
+  var candidates = [];
+  Object.keys(coFreq).forEach(function(key) {
+    var parts = key.split('\x00'), ew = parts[0], tw = parts[1];
+    var co = coFreq[key];
+    var isProper = /^[A-Z\u00C0-\u00DC]/.test(parts[0]);
+    var minCo = isProper ? 2 : 3;
+    if (co < minCo) return;
+    var dice = (2 * co) / ((enDocFreq[parts[0]]||1) + (tgtDocFreq[tw]||1));
+    if (dice < 0.65) return;
+    if (existingEn.has(parts[0]) || pendingEn.has(parts[0])) return;
+    var displayEn = ew;
+    if (isProper) {
+      for (var ci = 0; ci < APP.corpus.length; ci++) {
+        var src2 = APP.corpus[ci].en;
+        var re2  = new RegExp('\\b' + ew + '\\b', 'i');
+        var m2   = src2.match(re2);
+        if (m2) { displayEn = m2[0]; break; }
+      }
+    }
+    var example = '';
+    for (var j = 0; j < APP.corpus.length; j++) {
+      if (APP.corpus[j].en.toLowerCase().indexOf(parts[0]) >= 0) { example = APP.corpus[j].en; break; }
+    }
+    candidates.push({ id:uid(), en:displayEn, enKey:parts[0], pdt:tw,
+      confidence:Math.round(dice*100), coCount:co, enTotal:enDocFreq[parts[0]],
+      isProper:isProper, example:example, status:'pending' });
+  });
+  candidates.sort(function(a,b){ return b.confidence-a.confidence||b.coCount-a.coCount; });
+  var seen = new Set();
+  candidates = candidates.filter(function(c){
+    if (seen.has(c.enKey)) return false; seen.add(c.enKey); return true;
+  });
+  var added = 0;
+  candidates.forEach(function(c){
+    if (!pendingEn.has(c.enKey)) { APP.suggestions.push(c); pendingEn.add(c.enKey); added++; }
+  });
+  if (added) saveApp();
+  return added;
+}
+
+function approveSuggestion(id) {
+  var s = (APP.suggestions||[]).filter(function(x){ return x.id===id; })[0];
+  if (!s) return;
+  APP.phrases.push({ id:uid(), en:s.en, pdt:s.pdt, category:'auto', confidence:'suggested',
+    source:'corpus-cooccur', usage_count:0 });
+  APP.suggestions = APP.suggestions.filter(function(x){ return x.id!==id; });
+  saveApp(); renderSuggestions(); renderPhrases(); renderStats(); updateBadges();
+  toast(s.en + ' \u2192 ' + s.pdt + ' added', 'ok');
+}
+
+function rejectSuggestion(id) {
+  var s = (APP.suggestions||[]).filter(function(x){ return x.id===id; })[0];
+  APP.suggestions = (APP.suggestions||[]).filter(function(x){ return x.id!==id; });
+  saveApp(); renderSuggestions(); updateBadges();
+  if (s) toast('\u2715 ' + s.en + ' skipped', 'inf');
+}
+
+function approveAllHighConf() {
+  var hi = (APP.suggestions||[]).filter(function(s){ return s.confidence>=80&&s.status==='pending'; });
+  if (!hi.length) { toast('No suggestions \u226580% confidence', 'inf'); return; }
+  hi.forEach(function(s){
+    APP.phrases.push({ id:uid(), en:s.en, pdt:s.pdt, category:'auto', confidence:'suggested',
+      source:'corpus-cooccur', usage_count:0 });
+  });
+  APP.suggestions = APP.suggestions.filter(function(s){ return s.confidence<80; });
+  saveApp(); renderSuggestions(); renderPhrases(); renderStats(); updateBadges();
+  toast(hi.length + ' suggestions added', 'ok');
+}
+
+function clearAllSuggestions() {
+  APP.suggestions = []; saveApp(); renderSuggestions(); updateBadges();
+  toast('Suggestions cleared', 'inf');
+}
+
+function renderSuggestions() {
+  if (!APP.suggestions) APP.suggestions = [];
+  var sec = document.getElementById('suggestionsSection');
+  if (!sec) return;
+  var pending = APP.suggestions.filter(function(s){ return s.status==='pending'; });
+  if (!pending.length) { sec.style.display='none'; return; }
+  sec.style.display='';
+  var hiCount = pending.filter(function(s){ return s.confidence>=80; }).length;
+  var html = '<div class="sugg-section">';
+  html += '<div class="sugg-hdr">';
+  html += '<div class="sugg-hdr-left"><span class="sugg-title">&#128269; Suggestions</span>';
+  html += '<span class="sugg-count">' + pending.length + ' pending</span></div>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  if (hiCount) html += '<button class="btn btn-gold btn-sm" onclick="approveAllHighConf()">' +
+    '\u2705 Add \u226580% (' + hiCount + ')</button>';
+  html += '<button class="btn btn-ghost btn-sm" onclick="clearAllSuggestions()">Clear all</button>';
+  html += '</div></div>';
+  pending.forEach(function(s) {
+    var conf = s.confidence;
+    var barClr = conf>=80?'var(--accent)':conf>=65?'var(--gold)':'var(--text3)';
+    var pctStl = conf>=80?'color:var(--accent)':conf>=65?'color:var(--gold)':'';
+    var meta = 'Found in ' + s.coCount + ' of ' + (s.enTotal||'?') + ' pairs';
+    if (s.isProper) meta += ' \u00b7 proper noun';
+    var ex = s.example ? (s.example.length>90?s.example.substring(0,90)+'\u2026':s.example) : '';
+    html += '<div class="sugg-card">';
+    html += '<div class="sugg-main">';
+    html += '<span class="sugg-en">' + esc(s.en) + '</span>';
+    html += '<span class="sugg-arr">\u2192</span>';
+    html += '<span class="sugg-tgt">' + esc(s.pdt) + '</span>';
+    html += '<div class="sugg-conf-wrap">';
+    html += '<div class="sugg-bar"><div class="sugg-bar-fill" style="width:'+conf+'%;background:'+barClr+'"></div></div>';
+    html += '<span class="sugg-pct" style="'+pctStl+'">' + conf + '%</span>';
+    html += '</div></div>';
+    html += '<div class="sugg-meta">' + esc(meta) + '</div>';
+    if (ex) html += '<div class="sugg-example">' + esc(ex) + '</div>';
+    html += '<div class="sugg-actions">';
+    html += '<button class="sugg-approve" onclick="approveSuggestion(\''+s.id+'\')">\u2705 Add</button>';
+    html += '<button class="sugg-reject" onclick="rejectSuggestion(\''+s.id+'\')">\u2715 Skip</button>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+  sec.innerHTML = html;
+}
+
+// Legacy stub
+function autoExtractPhrases(pairs) { return 0; }
+
+// ── RENDER CORPUS ─────────────────────────────────────────────────────────────
+function renderCorpus() {
+  var zone = document.getElementById('corpusUploadZone');
+  var fbar = document.getElementById('corpusFilterBar');
+  var list = document.getElementById('pairList');
+  if (!APP.corpus.length) { zone.style.display=''; fbar.style.display='none'; list.innerHTML=''; return; }
+  zone.style.display='none'; fbar.style.display='flex';
+  // Article filter chips
+  var articles = [...new Set(APP.corpus.map(function(p){return p.article;}))];
+  // Remove old art chips
+  fbar.querySelectorAll('.art-chip').forEach(function(c){c.remove();});
+  // Add All chip if not present
+  if (!fbar.querySelector('.all-chip')) {
+    var all = document.createElement('button');
+    all.className='filter-chip all-chip active';
+    all.textContent='All';
+    all.onclick=function(){_pairSearch='';document.getElementById('pairSearch').value='';renderPairList();document.querySelectorAll('#corpusFilterBar .filter-chip').forEach(function(c){c.classList.remove('active');});all.classList.add('active');};
+    fbar.insertBefore(all, fbar.firstChild);
+  }
+  articles.forEach(function(art) {
+    var chip = document.createElement('button');
+    chip.className='filter-chip art-chip';
+    chip.textContent=art;
+    chip.onclick=function(){
+      _pairSearch=''; document.getElementById('pairSearch').value='';
+      document.querySelectorAll('#corpusFilterBar .filter-chip').forEach(function(c){c.classList.remove('active');});
+      chip.classList.add('active');
+      var filtered = APP.corpus.filter(function(p){return p.article===art;});
+      var l = document.getElementById('pairList');
+      l.innerHTML = filtered.map(pairHTML).join('');
+    };
+    fbar.appendChild(chip);
+  });
+  renderPairList();
+}
+
+function renderPairList() {
+  var list = document.getElementById('pairList');
+  var filtered = APP.corpus.filter(function(p) {
+    return !_pairSearch || p.en.toLowerCase().includes(_pairSearch) || p.pdt.toLowerCase().includes(_pairSearch);
+  });
+  if (!filtered.length) { list.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-msg">No pairs match.</div></div>'; return; }
+  list.innerHTML = filtered.map(pairHTML).join('');
+}
+
+function pairHTML(p) {
+  return '<div class="pair-card ' + (p.verified?'verified':'auto') + '">' +
+    '<div><div class="pair-lang">English</div><div class="pair-text">' + esc(p.en) + '</div></div>' +
+    '<div><div class="pair-lang">'+getTargetName()+'</div><div class="pair-text pdt">' + esc(p.pdt) + '</div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:4px;align-self:start">' +
+    '<button class="btn btn-ghost btn-sm" onclick="editPair(\''+p.id+'\')" title="Edit">✏️</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="openMatcher(\''+p.id+'\')" title="Deconstruct in Matcher">🧩</button>' +
+    '<button class="btn btn-danger btn-sm" onclick="deletePair(\''+p.id+'\')" title="Delete">✕</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function deletePair(id) {
+  APP.corpus=APP.corpus.filter(function(p){return p.id!==id;}); saveApp();
+  renderCorpus(); renderStats(); updateBadges(); toast('Pair removed','inf');
+}
+
+// ── RENDER STATS ──────────────────────────────────────────────────────────────
+function renderStats() {
+  document.getElementById('statPairs').textContent = APP.corpus.length;
+  document.getElementById('statArticles').textContent = new Set(APP.corpus.map(function(p){return p.article;})).size;
+  document.getElementById('statPhrases').textContent = APP.phrases.length;
+  document.getElementById('statVerified').textContent = APP.phrases.filter(function(p){return p.confidence==='verified';}).length;
+}
+
+// ── RENDER PHRASES ────────────────────────────────────────────────────────────
+function renderPhrases() {
+  renderSuggestions();
+  var grid = document.getElementById('phraseGrid');
+  var phrases = APP.phrases.filter(function(p) {
+    var mf = _phraseFilter==='all'||p.confidence===_phraseFilter||p.category===_phraseFilter;
+    var ms = !_phraseSearch||p.en.toLowerCase().includes(_phraseSearch)||p.pdt.toLowerCase().includes(_phraseSearch);
+    return mf && ms;
+  });
+  if (!phrases.length) { grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📖</div><div class="empty-msg">No phrases match.</div></div>'; return; }
+  grid.innerHTML = phrases.map(function(p) {
+    var cc = p.confidence==='verified'?'conf-verified':p.confidence==='auto'?'conf-auto':'conf-suggested';
+    var cl = p.confidence==='verified'?'✅':p.confidence==='auto'?'🔵':'🟡';
+    return '<div class="phrase-card">' +
+      '<span class="phrase-en">' + esc(p.en) + '</span>' +
+      '<span class="phrase-arrow">→</span>' +
+      '<span class="phrase-pdt">' + esc(p.pdt) + '</span>' +
+      '<span class="phrase-conf ' + cc + '">' + cl + '</span>' +
+      '<button style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:11px;margin-right:2px" onclick="editPhrase(\''+p.id+'\')">✏️</button>' +
+      '<button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deletePhrase(\''+p.id+'\')">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function setPhraseFilter(f,el) {
+  _phraseFilter=f;
+  document.querySelectorAll('#panel-phrases .filter-chip').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');
+  renderPhrases();
+}
+function deletePhrase(id) {
+  APP.phrases=APP.phrases.filter(function(p){return p.id!==id;}); saveApp();
+  renderPhrases(); renderStats(); toast('Phrase removed','inf');
+}
+
+// ── PRE-PROCESSOR ─────────────────────────────────────────────────────────────
+function runPreprocessor() {
+  var text = document.getElementById('sourceInput').value;
+  if (!text.trim()) { toast('Paste English text first','inf'); return; }
+  updateWordCount();
+  _preMatches = [];
+  var lower = text.toLowerCase();
+  var sorted = APP.phrases.slice().sort(function(a,b){return b.en.length-a.en.length;});
+  sorted.forEach(function(phrase) {
+    if (lower.includes(phrase.en.toLowerCase())) {
+      var already = _preMatches.some(function(m){return m.en.toLowerCase()===phrase.en.toLowerCase();});
+      if (!already) { _preMatches.push(phrase); phrase.usage_count=(phrase.usage_count||0)+1; }
+    }
+  });
+  saveApp();
+  renderPreprocessor();
+  // Diagnostic: tell user exactly what happened
+  if (!_preMatches.length) {
+    var pCount = APP.phrases.length;
+    var cCount = APP.corpus.length;
+    if (pCount === 0 && cCount === 0) {
+      toast('No phrases yet — build corpus first, then phrases auto-extract', 'inf');
+    } else if (pCount === 0) {
+      toast('Corpus has ' + cCount + ' pairs but no phrases extracted yet — check Phrases tab', 'inf');
+    } else {
+      toast('No phrase matches in this text (' + pCount + ' phrases in library)', 'inf');
+    }
+  } else {
+    toast(_preMatches.length + ' phrase match' + (_preMatches.length !== 1 ? 'es' : '') + ' found', 'ok');
+  }
+}
+
+function renderPreprocessor() {
+  var panel = document.getElementById('preprocessorPanel');
+  if (!_preMatches.length) { panel.style.display='none'; return; }
+  panel.style.display='block';
+  document.getElementById('matchCount').textContent = _preMatches.length + ' match' + (_preMatches.length!==1?'es':'') + ' found';
+  document.getElementById('matchList').innerHTML = _preMatches.map(function(m) {
+    return '<span class="match-chip"><span class="match-en">' + esc(m.en) + '</span><span style="color:var(--text3);font-size:10px">→</span><span class="match-pdt">' + esc(m.pdt) + '</span></span>';
+  }).join('');
+  document.getElementById('preprocessorBody').classList.add('open');
+  document.getElementById('preChevron').textContent = '▲';
+  _preOpen = true;
+}
+
+function togglePreprocessor() {
+  _preOpen = !_preOpen;
+  document.getElementById('preprocessorBody').classList.toggle('open',_preOpen);
+  document.getElementById('preChevron').textContent = _preOpen ? '▲' : '▼';
+}
+
+// ── PROMPT BUILDER ────────────────────────────────────────────────────────────
+function buildPrompt() {
+  var text = document.getElementById('sourceInput').value.trim();
+  if (!text) { toast('Paste English text first','inf'); return; }
+  runPreprocessor();
+  var examples = selectBestExamples(text, 12);
+  var m = APP.model || 'claude';
+  var mNotes = {
+    claude:'You are Claude. Respond ONLY with the ' + getTargetName() + ' translation — no commentary, no explanations.',
+    gpt:'Respond ONLY with the ' + getTargetName() + ' translation. No explanations or meta-commentary.',
+    gemini:'Output ONLY the translated text in ' + getTargetName() + '. No explanations, no headings, no commentary. Translate the full text.'
+  };
+  var tName = getTargetName();
+  var tNative = (APP.profile && APP.profile.nativeName) ? ' (' + APP.profile.nativeName + ')' : '';
+  var phraseBlock = _preMatches.length ?
+    '\n[REQUIRED PHRASE MAPPINGS — use these exact translations, no substitutions]\n' +
+    _preMatches.map(function(m){return '"'+m.en+'" = "'+m.pdt+'"';}).join('\n') : '';
+  var exBlock = examples.length ?
+    '\n[PARALLEL EXAMPLES — study for vocabulary and grammar patterns]\n' +
+    examples.map(function(e){return 'EN: '+e.en+'\n'+tName+': '+e.pdt;}).join('\n\n') : '';
+
+  var prompt = '[TASK]\nTranslate the following English text into ' + tName + tNative + '.\n' +
+    mNotes[m] + '\n\n' +
+    '[LANGUAGE NOTES]\n' +
+    tName + ' translation. Preserve ALL paragraph breaks exactly as in the source.\n' +
+    'Use corpus examples and phrase mappings provided to guide vocabulary and register.\n' +
+    phraseBlock + exBlock + '\n\n' +
+    '[SOURCE TEXT]\n' + text + '\n\n' +
+    '[OUTPUT — ' + tName + ' translation only]:';
+
+  document.getElementById('promptBox').textContent = prompt;
+  document.getElementById('copyPromptBtn').style.display = '';
+  document.getElementById('toggleReviewBtn').style.display = '';
+  toast('Prompt built · ' + examples.length + ' examples · ' + _preMatches.length + ' phrases locked','ok');
+  // Mobile: swap to right pane
+  if(window.innerWidth<=768) {
+    document.getElementById('transPane1').classList.add('mob-hide');
+    document.querySelector('.right-pane').classList.add('mob-show');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+function selectBestExamples(text, max) {
+  if (!APP.corpus.length) return [];
+  var lower = text.toLowerCase();
+  var words = lower.split(/\s+/).filter(function(w){return w.length>4;});
+  var scored = APP.corpus.map(function(p) {
+    var s=0; words.forEach(function(w){if(p.en.toLowerCase().includes(w))s++;}); return {p:p,s:s};
+  });
+  scored.sort(function(a,b){return b.s-a.s;});
+  return scored.slice(0,max).map(function(x){return x.p;});
+}
+
+function copyPrompt() {
+  var text = document.getElementById('promptBox').textContent;
+  if (!text||text.includes('Build a prompt')) { toast('Build the prompt first','inf'); return; }
+  navigator.clipboard.writeText(text).then(function(){toast('Prompt copied','ok');}).catch(function(){
+    var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied','ok');
+  });
+}
+
+// ── REVIEW MODE ───────────────────────────────────────────────────────────────
+function enterReviewMode() {
+  var ai = document.getElementById('aiResponseInput').value.trim();
+  var src = document.getElementById('sourceInput').value.trim();
+  if (!ai) { toast('Paste the AI translation first','inf'); return; }
+  if (!src) { toast('Source text is missing','inf'); return; }
+  _segments = buildSegments(src, ai, _granularity);
+  document.getElementById('promptView').style.display='none';
+  document.getElementById('reviewView').style.display='block';
+  document.getElementById('rightPaneTitle').textContent='Review Translation';
+  document.getElementById('toggleReviewBtn').textContent='⬅ Back';
+  document.getElementById('copyPromptBtn').style.display='none';
+  renderSegments();
+  toast('Review mode · ' + _segments.length + ' segments','ok');
+  // Mobile: update step label
+  if(window.innerWidth<=768) {
+    var s2 = document.getElementById('transStep2');
+    if(s2) { s2.childNodes[0].textContent='Step 3 · Review'; }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+function toggleReviewMode() {
+  var rev = document.getElementById('reviewView').style.display !== 'none';
+  if (rev) {
+    document.getElementById('reviewView').style.display='none';
+    document.getElementById('promptView').style.display='block';
+    document.getElementById('rightPaneTitle').textContent='Translation Prompt';
+    document.getElementById('toggleReviewBtn').textContent='Review Mode';
+    document.getElementById('copyPromptBtn').style.display='';
+  } else { enterReviewMode(); }
+}
+function mobBack() {
+  // Mobile back button in step label — returns to left pane
+  var s2 = document.getElementById('transStep2');
+  if(s2) { s2.childNodes[0].textContent='Step 2 · Prompt'; }
+  document.getElementById('transPane1').classList.remove('mob-hide');
+  document.querySelector('.right-pane').classList.remove('mob-show');
+  // Also exit review mode if active
+  if(document.getElementById('reviewView').style.display !== 'none') {
+    document.getElementById('reviewView').style.display='none';
+    document.getElementById('promptView').style.display='';
+    document.getElementById('rightPaneTitle').textContent='Translation Prompt';
+    document.getElementById('copyPromptBtn').style.display='';
+    document.getElementById('toggleReviewBtn').style.display='none';
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function buildSegments(en, pdt, g) {
+  var ep, pp;
+  if (g==='sentence') { ep=splitSentences(en); pp=splitSentences(pdt); }
+  else { ep=en.split(/\n\n+/).filter(Boolean); pp=pdt.split(/\n\n+/).filter(Boolean); }
+  var segs=[], max=Math.max(ep.length,pp.length);
+  for(var i=0;i<max;i++) {
+    segs.push({id:uid(),en:(ep[i]||'').trim(),draft:(pp[i]||'').trim(),approved:'',status:'pending',editing:false});
+  }
+  return segs;
+}
+
+function splitSentences(text) {
+  text = text.replace(/(\d+):(\d+)/g,'$1COLON$2');
+  var parts = text.split(/(?<=[.!?])\s+(?=[A-ZÜÄÖWJ])/);
+  return parts.map(function(p){return p.replace(/COLON/g,':').trim();}).filter(Boolean);
+}
+
+function setGranularity(g,btn) {
+  _granularity=g;
+  document.querySelectorAll('.toggle-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var src=document.getElementById('sourceInput').value.trim();
+  var ai=document.getElementById('aiResponseInput').value.trim();
+  if(src&&ai){_segments=buildSegments(src,ai,g);renderSegments();}
+}
+
+function renderSegments() {
+  document.getElementById('segmentList').innerHTML = _segments.map(function(seg,i) {
+    var sc=seg.status==='approved'?'status-approved':seg.status==='corrected'?'status-corrected':'status-pending';
+    var sl=seg.status==='approved'?'✅ Approved':seg.status==='corrected'?'✏️ Corrected':'⏳ Pending';
+    var disp=seg.approved||seg.draft;
+    return '<div class="segment '+seg.status+'" id="seg-'+seg.id+'">' +
+      '<div class="segment-hdr">' +
+        '<span class="seg-num">'+( i+1)+'</span>' +
+        '<span class="seg-status '+sc+'">'+sl+'</span>' +
+        '<div class="seg-actions">' +
+        (seg.editing ?
+          '<button class="btn btn-ghost btn-sm" onclick="cancelEdit(\''+seg.id+'\')">Cancel</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="saveEdit(\''+seg.id+'\')">Save</button>' :
+          '<button class="btn btn-ghost btn-sm" onclick="editSegment(\''+seg.id+'\')">Edit</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="approveSegment(\''+seg.id+'\')">✓ Approve</button>'
+        ) +
+        '</div>' +
+      '</div>' +
+      '<div class="segment-body">' +
+        '<div class="seg-en">'+esc(seg.en)+'</div>' +
+        (seg.editing ?
+          '<textarea class="seg-edit" id="edit-'+seg.id+'">'+esc(disp)+'</textarea>' :
+          '<div class="seg-pdt">'+esc(disp)+'</div>'
+        ) +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function approveSegment(id) {
+  var seg=_segments.find(function(s){return s.id===id;}); if(!seg) return;
+  seg.approved=seg.approved||seg.draft; seg.status='approved'; renderSegments();
+}
+function editSegment(id) {
+  var seg=_segments.find(function(s){return s.id===id;}); if(!seg) return;
+  seg.editing=true; renderSegments();
+  var el=document.getElementById('edit-'+id); if(el){el.focus();el.select();}
+}
+function cancelEdit(id) {
+  var seg=_segments.find(function(s){return s.id===id;}); if(!seg) return;
+  seg.editing=false; renderSegments();
+}
+function saveEdit(id) {
+  var seg=_segments.find(function(s){return s.id===id;}); if(!seg) return;
+  var el=document.getElementById('edit-'+id); if(!el) return;
+  var newText=el.value.trim();
+  seg.approved=newText;
+  seg.status=newText!==seg.draft?'corrected':'approved';
+  seg.editing=false;
+  if(seg.status==='corrected'&&seg.en&&newText) {
+    var exists=APP.corpus.some(function(p){return p.en===seg.en;});
+    if(!exists) APP.corpus.push({id:uid(),article:'Correction',en:seg.en,pdt:newText,verified:true,added:today()});
+    autoExtractPhrases([{en:seg.en,pdt:newText}]);
+  }
+  saveApp(); renderSegments();
+  toast(seg.status==='corrected'?'Correction saved to corpus':'Approved','ok');
+}
+function approveAll() {
+  _segments.forEach(function(s){if(s.status==='pending'){s.approved=s.draft;s.status='approved';}});
+  renderSegments(); toast('All pending approved','ok');
+}
+function saveTranslation() {
+  var approved=_segments.filter(function(s){return s.status!=='pending';}).length;
+  if(!approved){toast('Approve at least one segment','inf');return;}
+  var session={
+    id:uid(),date:today(),model:APP.model,
+    source:document.getElementById('sourceInput').value.trim().substring(0,80)+'…',
+    segments:_segments.slice(),total:_segments.length,approved:approved,
+    corrections:_segments.filter(function(s){return s.status==='corrected';}).length
+  };
+  APP.sessions.push(session); saveApp(); renderQueue(); updateBadges();
+  toast('Saved · '+approved+'/'+_segments.length+' segments','ok');
+  switchTab('queue');
+}
+
+// ── QUEUE ─────────────────────────────────────────────────────────────────────
+function renderQueue() {
+  var list=document.getElementById('queueList');
+  if(!APP.sessions.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-msg">No translations yet. Complete a session in the Translator tab.</div></div>';return;}
+  list.innerHTML=APP.sessions.slice().reverse().map(function(s){
+    var pct=Math.round(s.approved/s.total*100);
+    return '<div class="queue-card">' +
+      '<div class="queue-card-hdr">' +
+        '<div><div class="queue-title">'+esc(s.source)+'</div>' +
+        '<div class="queue-meta">'+s.date+' · '+s.model+' · '+s.approved+'/'+s.total+' approved · '+s.corrections+' corrections</div></div>' +
+        '<div class="queue-actions">' +
+          '<button class="btn btn-ghost btn-sm" onclick="exportSession(\''+s.id+'\')">⬇</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteSession(\''+s.id+'\')">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="queue-progress"><div class="queue-bar" style="width:'+pct+'%"></div></div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-top:5px">'+pct+'% reviewed</div>' +
+    '</div>';
+  }).join('');
+}
+
+function deleteSession(id) {
+  APP.sessions=APP.sessions.filter(function(s){return s.id!==id;}); saveApp();
+  renderQueue(); updateBadges(); toast('Removed','inf');
+}
+
+function exportSession(id) {
+  var s=APP.sessions.find(function(x){return x.id===id;}); if(!s) return;
+  var lines=['PLAUTDIETSCH TRANSLATION','Date: '+s.date,'Model: '+s.model,''];
+  s.segments.forEach(function(seg,i){
+    lines.push('--- '+(i+1)+' ---');
+    lines.push('EN: '+seg.en);
+    lines.push('PDT: '+(seg.approved||seg.draft));
+    if(seg.status==='corrected') lines.push('[CORRECTED]');
+    lines.push('');
+  });
+  downloadText(lines.join('\n'),'translation_'+s.date+'.txt');
+}
+
+function clearApproved() {
+  if(!confirm('Remove fully reviewed sessions?')) return;
+  APP.sessions=APP.sessions.filter(function(s){return s.approved<s.total;}); saveApp();
+  renderQueue(); updateBadges(); toast('Cleared','ok');
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function saveNewPair() {
+  var en=document.getElementById('newPairEn').value.trim();
+  var pdt=document.getElementById('newPairPdt').value.trim();
+  var art=document.getElementById('newPairArticle').value.trim()||'Manual';
+  if(!en||!pdt){toast('Both fields required','err');return;}
+  APP.corpus.push({id:uid(),article:art,en:en,pdt:pdt,verified:true,added:today()});
+  saveApp(); renderCorpus(); renderStats(); updateBadges(); closeModal('addPairModal');
+  document.getElementById('newPairEn').value=''; document.getElementById('newPairPdt').value=''; document.getElementById('newPairArticle').value='';
+  toast('Pair added','ok');
+}
+function saveNewPhrase() {
+  var en=document.getElementById('newPhraseEn').value.trim();
+  var pdt=document.getElementById('newPhrasePdt').value.trim();
+  if(!en||!pdt){toast('Both fields required','err');return;}
+  APP.phrases.push({id:uid(),en:en,pdt:pdt,category:document.getElementById('newPhraseCategory').value,confidence:document.getElementById('newPhraseConf').value,source:'manual',usage_count:0});
+  saveApp(); renderPhrases(); renderStats(); updateBadges(); closeModal('addPhraseModal');
+  document.getElementById('newPhraseEn').value=''; document.getElementById('newPhrasePdt').value='';
+  toast('Phrase added','ok');
+}
+
+// ── EXPORT ALL ────────────────────────────────────────────────────────────────
+function exportAll() {
+  var lines=['PDT CORPUS EXPORT','Exported: '+today(),'Pairs: '+APP.corpus.length,'Phrases: '+APP.phrases.length,''];
+  lines.push('## CORPUS PAIRS','');
+  APP.corpus.forEach(function(p){
+    lines.push('### ARTICLE: '+p.article+' ###');
+    lines.push('EN: '+p.en); lines.push('PDT: '+p.pdt); lines.push('---'); lines.push('');
+  });
+  lines.push('## PHRASE LIBRARY','');
+  APP.phrases.forEach(function(p){
+    lines.push('TERM: '+p.en); lines.push('PLAUTDIETSCH: '+p.pdt);
+    lines.push('CATEGORY: '+p.category+' | CONFIDENCE: '+p.confidence);
+    lines.push('---'); lines.push('');
+  });
+  downloadText(lines.join('\n'),'pdt_export_'+today()+'.txt');
+  toast('Exported','ok');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function updateBadges() {
+  document.getElementById('badge-builder').textContent=_builderPairs.filter(function(p){return p.keep;}).length;
+  document.getElementById('badge-corpus').textContent=APP.corpus.length;
+  var _sp=(APP.suggestions||[]).filter(function(s){return s.status==='pending';}).length;
+  document.getElementById('badge-phrases').textContent=APP.phrases.length+(_sp?'+'+_sp:'');
+  document.getElementById('badge-queue').textContent=APP.sessions.length;
+}
+function updateWordCount() {
+  var t=document.getElementById('sourceInput').value;
+  var w=t.trim()?t.trim().split(/\s+/).length:0;
+  document.getElementById('wordCount').textContent=w+' word'+(w!==1?'s':'');
+}
+document.getElementById('sourceInput').addEventListener('input',updateWordCount);
+function clearInput() {
+  document.getElementById('sourceInput').value='';
+  document.getElementById('aiResponseInput').value='';
+  document.getElementById('promptBox').textContent='Build a prompt by clicking "Build Prompt" after pasting your English text.';
+  document.getElementById('preprocessorPanel').style.display='none';
+  _preMatches=[];_segments=[];
+  document.getElementById('reviewView').style.display='none';
+  document.getElementById('promptView').style.display='block';
+  document.getElementById('rightPaneTitle').textContent='Translation Prompt';
+  document.getElementById('wordCount').textContent='0 words';
+  toast('Cleared','inf');
+}
+function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
+function today(){return new Date().toISOString().slice(0,10);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function downloadText(text,filename){
+  var a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(text);
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){document.body.removeChild(a);},100);
+}
+var _toastTimer;
+function toast(msg,type){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+(type||'ok');
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(function(){el.className='toast';},3000);
+}
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){if(e.target===o)o.classList.add('hidden');});
+});
+
+// ── EDIT PAIR ──────────────────────────────────────────────────────────────
+function editPair(id) {
+  var p = APP.corpus.find(function(x){return x.id===id;}); if(!p) return;
+  document.getElementById('editPairId').value = p.id;
+  document.getElementById('editPairEn').value = p.en;
+  document.getElementById('editPairPdt').value = p.pdt;
+  document.getElementById('editPairArticle').value = p.article||'';
+  openModal('editPairModal');
+}
+function saveEditedPair() {
+  var id = document.getElementById('editPairId').value;
+  var p = APP.corpus.find(function(x){return x.id===id;}); if(!p) return;
+  var en = document.getElementById('editPairEn').value.trim();
+  var pdt = document.getElementById('editPairPdt').value.trim();
+  if(!en||!pdt){toast('Both fields required','err');return;}
+  p.en=en; p.pdt=pdt; p.article=document.getElementById('editPairArticle').value.trim()||p.article;
+  saveApp(); renderCorpus(); renderStats(); closeModal('editPairModal');
+  toast('Pair updated','ok');
+}
+
+// ── EDIT PHRASE ─────────────────────────────────────────────────────────────
+function editPhrase(id) {
+  var p = APP.phrases.find(function(x){return x.id===id;}); if(!p) return;
+  document.getElementById('editPhraseId').value = p.id;
+  document.getElementById('editPhraseEn').value = p.en;
+  document.getElementById('editPhrasePdt').value = p.pdt;
+  document.getElementById('editPhraseCategory').value = p.category||'common';
+  document.getElementById('editPhraseConf').value = p.confidence||'suggested';
+  openModal('editPhraseModal');
+}
+function saveEditedPhrase() {
+  var id = document.getElementById('editPhraseId').value;
+  var p = APP.phrases.find(function(x){return x.id===id;}); if(!p) return;
+  var en = document.getElementById('editPhraseEn').value.trim();
+  var pdt = document.getElementById('editPhrasePdt').value.trim();
+  if(!en||!pdt){toast('Both fields required','err');return;}
+  p.en=en; p.pdt=pdt;
+  p.category=document.getElementById('editPhraseCategory').value;
+  p.confidence=document.getElementById('editPhraseConf').value;
+  saveApp(); renderPhrases(); renderStats(); closeModal('editPhraseModal');
+  toast('Phrase updated','ok');
+}
+
+// ── FOLDER SCAN BUILDER ──────────────────────────────────────────────────────
+var _folderFiles = {}; // { '1': { en: File, pdt: File }, '2': ... }
+var _folderPairs = []; // detected numeric pairs
+var _folderMode = 'manual'; // 'manual' | 'folder'
+
+function switchBuilderMode(mode) {
+  _folderMode = mode;
+  document.getElementById('builderModeManual').classList.toggle('active', mode==='manual');
+  document.getElementById('builderModeFolder').classList.toggle('active', mode==='folder');
+  document.getElementById('builderManualSection').style.display = mode==='manual' ? '' : 'none';
+  document.getElementById('builderFolderSection').style.display = mode==='folder' ? '' : 'none';
+}
+
+function handleFolderSelect(e) {
+  var files = Array.from(e.target.files);
+  e.target.value = '';
+  _folderFiles = {};
+  _folderPairs = [];
+
+  files.forEach(function(f) {
+    // Match patterns: 1_en.html, 1_pdt.html, article1_en.html, etc.
+    var m = f.name.match(/^(.+?)_(en|pdt)\.html?$/i);
+    if (!m) return;
+    var key = m[1].toLowerCase();
+    var lang = m[2].toLowerCase();
+    if (!_folderFiles[key]) _folderFiles[key] = {};
+    _folderFiles[key][lang] = f;
+  });
+
+  // Find complete pairs
+  Object.keys(_folderFiles).forEach(function(key) {
+    var pair = _folderFiles[key];
+    if (pair.en && pair.pdt) {
+      _folderPairs.push({ key: key, enFile: pair.en, pdtFile: pair.pdt });
+    }
+  });
+
+  renderFolderPairList();
+}
+
+function renderFolderPairList() {
+  var container = document.getElementById('folderPairList');
+  var status = document.getElementById('folderScanStatus');
+
+  if (!_folderPairs.length) {
+    status.textContent = 'No paired files found. Files must be named like: 1_en.html + 1_pdt.html';
+    container.innerHTML = '';
+    return;
+  }
+
+  status.textContent = _folderPairs.length + ' paired article' + (_folderPairs.length!==1?'s':'') + ' detected. Select which to process:';
+
+  container.innerHTML = _folderPairs.map(function(p, i) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px">' +
+      '<input type="checkbox" id="fp-'+i+'" checked style="accent-color:var(--accent)">' +
+      '<label for="fp-'+i+'" style="font-size:12px;font-weight:600;flex:1;cursor:pointer">' + esc(p.key) + '</label>' +
+      '<span style="font-size:11px;color:var(--text3)">' + p.enFile.name + ' + ' + p.pdtFile.name + '</span>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('processFolderBtn').disabled = false;
+}
+
+function processFolderPairs() {
+  var selected = _folderPairs.filter(function(p, i) {
+    var cb = document.getElementById('fp-'+i);
+    return cb && cb.checked;
+  });
+  if (!selected.length) { toast('Select at least one pair','inf'); return; }
+
+  document.getElementById('processFolderBtn').disabled = true;
+  document.getElementById('folderScanStatus').textContent = 'Processing ' + selected.length + ' pairs…';
+
+  var results = [];
+  var pending = selected.length;
+
+  selected.forEach(function(pair) {
+    var enText = '', pdtText = '';
+    var readsLeft = 2;
+
+    function onBothRead() {
+      var enParser = new DOMParser();
+      var pdtParser = new DOMParser();
+      var enDoc = enParser.parseFromString(enText, 'text/html');
+      var pdtDoc = pdtParser.parseFromString(pdtText, 'text/html');
+      ['script','style','nav','header','footer','aside','figure'].forEach(function(tag) {
+        enDoc.querySelectorAll(tag).forEach(function(el){el.remove();});
+        pdtDoc.querySelectorAll(tag).forEach(function(el){el.remove();});
+      });
+      var enParas = [], pdtParas = [];
+      enDoc.querySelectorAll('p,h1,h2,h3,h4,li,blockquote').forEach(function(el){
+        var t=el.textContent.replace(/\s+/g,' ').trim(); if(t.length>15) enParas.push(t);
+      });
+      pdtDoc.querySelectorAll('p,h1,h2,h3,h4,li,blockquote').forEach(function(el){
+        var t=el.textContent.replace(/\s+/g,' ').trim(); if(t.length>8) pdtParas.push(t);
+      });
+      // Deduplicate
+      enParas = enParas.filter(function(p,i,a){return a.indexOf(p)===i;});
+      pdtParas = pdtParas.filter(function(p,i,a){return a.indexOf(p)===i;});
+      var min = Math.min(enParas.length, pdtParas.length);
+      var pairs = [];
+      for(var i=0;i<min;i++){
+        if(enParas[i]&&pdtParas[i]&&enParas[i].length>15&&pdtParas[i].length>8)
+          pairs.push({id:uid(),en:enParas[i],pdt:pdtParas[i],keep:true,article:pair.key});
+      }
+      results.push({ article: pair.key, pairs: pairs });
+      pending--;
+      if (pending === 0) finalizeFolderProcess(results);
+    }
+
+    var r1=new FileReader(); r1.onload=function(e){enText=e.target.result;if(--readsLeft===0)onBothRead();};
+    var r2=new FileReader(); r2.onload=function(e){pdtText=e.target.result;if(--readsLeft===0)onBothRead();};
+    r1.readAsText(pair.enFile,'UTF-8');
+    r2.readAsText(pair.pdtFile,'UTF-8');
+  });
+}
+
+function finalizeFolderProcess(results) {
+  var totalAdded = 0, totalPhrases = 0;
+  results.forEach(function(r) {
+    r.pairs.forEach(function(p) {
+      var exists = APP.corpus.some(function(c){return c.en===p.en&&c.pdt===p.pdt;});
+      if(!exists) {
+        APP.corpus.push({id:uid(),article:r.article,en:p.en,pdt:p.pdt,verified:true,added:today()});
+        totalAdded++;
+      }
+    });
+    totalPhrases += autoExtractPhrases(r.pairs.map(function(p){return {en:p.en,pdt:p.pdt};}));
+  });
+  saveApp(); renderCorpus(); renderStats(); renderPhrases(); updateBadges();
+  document.getElementById('folderScanStatus').textContent = 'Done — ' + totalAdded + ' pairs added, ' + totalPhrases + ' phrases extracted';
+  document.getElementById('processFolderBtn').disabled = false;
+  toast(totalAdded + ' pairs pushed · ' + totalPhrases + ' phrases','ok');
+  switchTab('corpus');
+}
+
+
+// ── PDF SUPPORT ──────────────────────────────────────────────────────────────
+
+function handleEpubInputChange(e) {
+  var files = Array.from(e.target.files);
+  e.target.value = '';
+  if (files.length !== 2) { toast('Select exactly 2 EPUBs (one EN, one target)', 'err'); return; }
+
+  // Auto-detect EN vs target by filename
+  var enFile, tgtFile;
+  var hints = getPdfHints();  // reuse same profile hints
+  var enPat  = new RegExp(hints.en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
+  var tgtPat = hints.target ? new RegExp(hints.target.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i') : null;
+  var looksEN  = function(f){ return enPat.test(f.name) || /[_(](e|en)[_.)]/i.test(f.name); };
+  var looksTgt = function(f){ return tgtPat ? tgtPat.test(f.name) : false; };
+
+  if      (looksEN(files[0]) || looksTgt(files[1])) { enFile=files[0]; tgtFile=files[1]; }
+  else if (looksEN(files[1]) || looksTgt(files[0])) { enFile=files[1]; tgtFile=files[0]; }
+  else    { enFile=files[0]; tgtFile=files[1]; toast('Could not auto-detect EN/target — treating first file as EN','inf'); }
+
+  toast('Parsing EPUBs…','inf');
+  Promise.all([parseEPUB(enFile), parseEPUB(tgtFile)])
+    .then(function(results) {
+      var enParsed = results[0], tgtParsed = results[1];
+
+      // ── Number-keyed alignment (JW ¶ anchoring) ───────────────────────
+      var enHasNums  = enParsed.filter(function(p){ return p.num !== null; }).length > 3;
+      var tgtHasNums = tgtParsed.filter(function(p){ return p.num !== null; }).length > 3;
+      var enBlocks, pdtBlocks, matchNote, toastType;
+
+      if (enHasNums && tgtHasNums) {
+        // Build num → text maps
+        var enMap = {}, tgtMap = {};
+        enParsed.forEach(function(p){  if (p.num !== null) enMap[p.num]  = p.text; });
+        tgtParsed.forEach(function(p){ if (p.num !== null) tgtMap[p.num] = p.text; });
+
+        // Union of all paragraph numbers, sorted ascending
+        var allNums = [];
+        Object.keys(enMap).forEach(function(n){ if (allNums.indexOf(+n) < 0) allNums.push(+n); });
+        Object.keys(tgtMap).forEach(function(n){ if (allNums.indexOf(+n) < 0) allNums.push(+n); });
+        allNums.sort(function(a, b){ return a - b; });
+
+        enBlocks  = allNums.map(function(n){ return enMap[n]  !== undefined ? enMap[n]  : null; });
+        pdtBlocks = allNums.map(function(n){ return tgtMap[n] !== undefined ? tgtMap[n] : null; });
+
+        var matched   = allNums.filter(function(n){ return enMap[n] && tgtMap[n]; }).length;
+        var unmatched = allNums.length - matched;
+        matchNote = matched + '/' + allNums.length + ' ¶s matched by number'
+                  + (unmatched > 0 ? ' · ' + unmatched + ' unmatched (shown in red)' : ' — perfect!');
+        toastType = unmatched === 0 ? 'ok' : 'inf';
+
+      } else {
+        // Positional fallback for non-JW EPUBs
+        enBlocks  = enParsed.map(function(p){ return p.text; });
+        pdtBlocks = tgtParsed.map(function(p){ return p.text; });
+        matchNote = 'No ¶ numbers found — positional alignment ('
+                  + enBlocks.length + ' EN · ' + pdtBlocks.length + ' target)';
+        toastType = 'inf';
+      }
+
+      var artName = enFile.name
+        .replace(/[_-]?(e|en|lwx|pdt|nds|cym|gla|hat)[_-]?/gi, '')
+        .replace(/\.epub$/i, '')
+        .replace(/[_-]+/g, ' ')
+        .trim() || 'EPUB Import';
+
+      _bPairs.push({
+        id: uid(), key: artName, article: artName,
+        enFile: null, pdtFile: null,
+        selected: true, status: 'pending', pairCount: 0,
+        enBlocks: enBlocks, pdtBlocks: pdtBlocks
+      });
+
+      document.getElementById('builderPairsSection').style.display = 'block';
+      renderBuilderPairsList();
+      toast(matchNote, toastType);
+    })
+    .catch(function(err){ toast('EPUB parse error: ' + err.message, 'err'); console.error(err); });
+}
+
+async function parseEPUB(file) {
+  var ab  = await file.arrayBuffer();
+  var zip = await JSZip.loadAsync(ab);
+
+  // ── Step 1: OPF path via META-INF/container.xml ──────────────────────────
+  var containerXml = await zip.file('META-INF/container.xml').async('string');
+  var opfPathM = containerXml.match(/full-path="([^"]+\.opf)"/i);
+  if (!opfPathM) throw new Error('Cannot find OPF in EPUB container');
+  var opfPath = opfPathM[1];
+  var opfDir  = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+
+  // ── Step 2: read OPF manifest + spine ────────────────────────────────────
+  var opfXml   = await zip.file(opfPath).async('string');
+  var manifest = {};
+  var mRe = /<item\b[^>]*\bid="([^"]+)"[^>]*\bhref="([^"]+)"/gi, mm;
+  while ((mm = mRe.exec(opfXml)) !== null) manifest[mm[1]] = mm[2];
+
+  var spineItems = [];
+  var spineSec = opfXml.match(/<spine[\s\S]*?<\/spine>/i);
+  if (spineSec) {
+    var sRe = /idref="([^"]+)"/gi, sm;
+    while ((sm = sRe.exec(spineSec[0])) !== null) {
+      var href = manifest[sm[1]];
+      if (href) spineItems.push(href);
+    }
+  }
+  if (!spineItems.length) throw new Error('EPUB spine is empty');
+
+  // ── Step 3: extract paragraphs with JW paragraph-number anchoring ────────
+  // Priority:  (1) data-pid attribute  (2) .parNum span  (3) no number
+  // Duplicate paragraph numbers (e.g. in nav/toc spine docs) are skipped.
+  var domParser  = new DOMParser();
+  var paragraphs = [];     // [{num: Number|null, text: String}]
+  var seenNums   = new Set();
+
+  for (var si = 0; si < spineItems.length; si++) {
+    var rawHref  = spineItems[si].split('#')[0];
+    var fullPath = (opfDir + rawHref).replace(/[^/]+\/\.\.\//g, '').replace(/^\//, '');
+    var fileObj  = zip.file(fullPath) || zip.file(rawHref) || zip.file(decodeURIComponent(fullPath));
+    if (!fileObj) continue;
+
+    var xhtml = await fileObj.async('string');
+    var doc   = domParser.parseFromString(xhtml, 'application/xhtml+xml');
+
+    // Remove noise containers
+    ['script', 'style', 'nav', 'head', 'figure', 'aside'].forEach(function(tag) {
+      doc.querySelectorAll(tag).forEach(function(el) { el.remove(); });
+    });
+
+    doc.querySelectorAll('p').forEach(function(el) {
+      var num = null;
+
+      // Method 1: data-pid (JW primary — present on every numbered paragraph)
+      var pid = el.getAttribute('data-pid');
+      if (pid && /^\d+$/.test(pid.trim())) {
+        num = parseInt(pid.trim(), 10);
+      }
+
+      // Method 2: .parNum span (older JW EPUBs / some languages)
+      if (num === null) {
+        var pnEl = el.querySelector('.parNum, [class~="parNum"]');
+        if (pnEl) {
+          var pnTxt = pnEl.textContent.trim();
+          if (/^\d+$/.test(pnTxt)) {
+            num = parseInt(pnTxt, 10);
+            pnEl.remove();   // strip number from text
+          }
+        }
+      }
+
+      var text = el.textContent.replace(/\s+/g, ' ').trim();
+
+      // Noise filter
+      if (text.length < 18)                                        return;
+      if (/^[\d\s\W]{0,6}$/.test(text))                           return;
+      if (/christian congregation of jehovah/i.test(text))        return;
+      if (/watchtower bible/i.test(text))                         return;
+      if (/printed in /i.test(text))                              return;
+      if (/^(song|leet|lied|gesang)\s*\d+/i.test(text))          return;
+      // All-caps short lines (headers/labels) — keep if >= 45 chars
+      if (/^[A-Z\u00C0-\u00DC\s\u2013\u2014]{2,}$/.test(text) && text.length < 45) return;
+
+      // Skip duplicate paragraph numbers (nav/toc copies)
+      if (num !== null) {
+        if (seenNums.has(num)) return;
+        seenNums.add(num);
+      }
+
+      paragraphs.push({ num: num, text: text });
+    });
+  }
+
+  // ── Step 4: sort — numbered paragraphs by num, unnumbered appended ───────
+  var numbered   = paragraphs.filter(function(p){ return p.num !== null; });
+  var unnumbered = paragraphs.filter(function(p){ return p.num === null; });
+  numbered.sort(function(a, b){ return a.num - b.num; });
+
+  // If we got meaningful paragraph numbers use them; otherwise fall back to order
+  return (numbered.length > 3) ? numbered.concat(unnumbered) : unnumbered;
+}
+
+
+
+
+// ── RESET EVERYTHING ──────────────────────────────────────────────────────────
+function showResetConfirm() {
+  var row = document.getElementById('resetConfirmRow');
+  row.style.display = 'flex';
+  row.style.flexDirection = 'column';
+  document.getElementById('resetConfirmInput').value = '';
+  document.getElementById('resetConfirmInput').focus();
+}
+function hideResetConfirm() {
+  document.getElementById('resetConfirmRow').style.display = 'none';
+  document.getElementById('resetConfirmInput').value = '';
+}
+function confirmReset() {
+  var val = (document.getElementById('resetConfirmInput').value || '').trim().toUpperCase();
+  if (val !== 'RESET') {
+    toast('Type RESET (all caps) to confirm', 'err');
+    document.getElementById('resetConfirmInput').focus();
+    return;
+  }
+  try { localStorage.clear(); } catch(e) {}
+  toast('All data wiped. Reloading…', 'inf');
+  setTimeout(function(){ location.reload(); }, 900);
+}
+
+// ── MATCHER ───────────────────────────────────────────────────────────────────
+
+var _matcherPair  = null;   // { id, en, pdt }
+var _matcherEnTok = [];     // [{ word, idx, side:'en', linkId:null }]
+var _matcherTgtTok= [];     // [{ word, idx, side:'tgt', linkId:null }]
+var _matcherLinks = [];     // [{ id, enWords:[], tgtWords:[] }]
+var _matcherEnSel = [];     // selected en token indices
+var _matcherTgtSel= [];     // selected tgt token indices
+
+// Pair colour palette — cycles through for each linked pair
+var MATCHER_COLORS = [
+  {bg:'rgba(76,175,145,.18)',  border:'rgba(76,175,145,.6)',  text:'#4caf91'},
+  {bg:'rgba(121,192,255,.18)', border:'rgba(121,192,255,.6)', text:'#79c0ff'},
+  {bg:'rgba(201,168,76,.18)',  border:'rgba(201,168,76,.6)',  text:'#c9a84c'},
+  {bg:'rgba(244,112,103,.18)', border:'rgba(244,112,103,.6)', text:'#f47067'},
+  {bg:'rgba(180,130,255,.18)', border:'rgba(180,130,255,.6)', text:'#b482ff'},
+  {bg:'rgba(255,165,80,.18)',  border:'rgba(255,165,80,.6)',  text:'#ffa550'},
+];
+
+function openMatcher(pairId) {
+  var pair = APP.corpus.find(function(p){ return p.id === pairId; });
+  if (!pair) { toast('Pair not found','err'); return; }
+  _matcherPair   = pair;
+  _matcherLinks  = [];
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+  _matcherEnTok  = pair.en.split(/\s+/).filter(Boolean).map(function(w,i){
+    return { word:w, idx:i, side:'en', linkId:null };
+  });
+  _matcherTgtTok = pair.pdt.split(/\s+/).filter(Boolean).map(function(w,i){
+    return { word:w, idx:i, side:'tgt', linkId:null };
+  });
+  // State must be set before switchTab triggers renderMatcher
+  switchTab('matcher');
+}
+
+function renderMatcher() {
+  if (!_matcherPair) {
+    document.getElementById('matcherEmpty').style.display = '';
+    document.getElementById('matcherWorkspace').style.display = 'none';
+    document.getElementById('matcherExtractBtn').disabled = true;
+    return;
+  }
+  document.getElementById('matcherEmpty').style.display = 'none';
+  document.getElementById('matcherWorkspace').style.display = '';
+  document.getElementById('matcherSource').textContent =
+    'From corpus · ' + (_matcherPair.article || 'Unknown article');
+  document.getElementById('matcherTargetLabel').textContent = getTargetName();
+
+  renderMatcherTokens();
+  renderMatcherLinks();
+  updateMatcherActionBar();
+}
+
+function renderMatcherTokens() {
+  document.getElementById('matcherEnTokens').innerHTML =
+    _matcherEnTok.map(function(t){ return tokenChip(t, _matcherEnSel); }).join('');
+  document.getElementById('matcherTgtTokens').innerHTML =
+    _matcherTgtTok.map(function(t){ return tokenChip(t, _matcherTgtSel); }).join('');
+}
+
+function tokenChip(t, selArr) {
+  var cls = 'selected' in t ? '' : '';
+  var selected = selArr.indexOf(t.idx) >= 0;
+  var linked   = t.linkId !== null;
+  var colorStyle = '';
+  if (linked) {
+    var lIdx = _matcherLinks.findIndex(function(l){ return l.id === t.linkId; });
+    var col  = MATCHER_COLORS[lIdx % MATCHER_COLORS.length];
+    colorStyle = 'background:' + col.bg + ';border-color:' + col.border + ';color:' + col.text + ';';
+  }
+  cls = 'm-token' + (selected ? ' selected' : '') + (linked ? ' linked' : '');
+  return '<span class="' + cls + '" style="' + colorStyle + '"' +
+    ' onclick="toggleMatcherToken(\'' + t.side + '\',' + t.idx + ')">' +
+    esc(t.word) + '</span>';
+}
+
+function toggleMatcherToken(side, idx) {
+  var selArr = side === 'en' ? _matcherEnSel : _matcherTgtSel;
+  var tokArr = side === 'en' ? _matcherEnTok : _matcherTgtTok;
+  var tok    = tokArr[idx];
+
+  // If already linked — clicking unlinks that whole pair
+  if (tok.linkId !== null) {
+    unlinkPair(tok.linkId);
+    return;
+  }
+
+  var pos = selArr.indexOf(idx);
+  if (pos >= 0) { selArr.splice(pos, 1); }
+  else          { selArr.push(idx); selArr.sort(function(a,b){return a-b;}); }
+
+  if (side === 'en') _matcherEnSel = selArr;
+  else               _matcherTgtSel = selArr;
+
+  renderMatcherTokens();
+  updateMatcherActionBar();
+}
+
+function updateMatcherActionBar() {
+  var bar     = document.getElementById('matcherActionBar');
+  var linkBtn = document.getElementById('matcherLinkBtn');
+  var desc    = document.getElementById('matcherSelDesc');
+  var hasEn   = _matcherEnSel.length > 0;
+  var hasTgt  = _matcherTgtSel.length > 0;
+
+  bar.style.display = (hasEn || hasTgt) ? 'flex' : 'none';
+
+  if (hasEn && hasTgt) {
+    var enWords  = _matcherEnSel.map(function(i){ return _matcherEnTok[i].word; }).join(' ');
+    var tgtWords = _matcherTgtSel.map(function(i){ return _matcherTgtTok[i].word; }).join(' ');
+    desc.textContent = '"' + enWords + '"  ↔  "' + tgtWords + '"';
+    linkBtn.disabled = false;
+  } else if (hasEn) {
+    desc.textContent = _matcherEnSel.length + ' EN token' + (_matcherEnSel.length>1?'s':'') + ' selected — now select target';
+    linkBtn.disabled = true;
+  } else if (hasTgt) {
+    desc.textContent = _matcherTgtSel.length + ' target token' + (_matcherTgtSel.length>1?'s':'') + ' selected — now select English';
+    linkBtn.disabled = true;
+  }
+}
+
+function linkMatcherSel() {
+  if (!_matcherEnSel.length || !_matcherTgtSel.length) return;
+
+  var linkId   = uid();
+  var enWords  = _matcherEnSel.map(function(i){ return _matcherEnTok[i].word; });
+  var tgtWords = _matcherTgtSel.map(function(i){ return _matcherTgtTok[i].word; });
+
+  _matcherEnSel.forEach(function(i){  _matcherEnTok[i].linkId  = linkId; });
+  _matcherTgtSel.forEach(function(i){ _matcherTgtTok[i].linkId = linkId; });
+
+  _matcherLinks.push({ id:linkId, enWords:enWords, tgtWords:tgtWords });
+
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+
+  renderMatcherTokens();
+  renderMatcherLinks();
+  updateMatcherActionBar();
+  document.getElementById('matcherExtractBtn').disabled = false;
+}
+
+function unlinkPair(linkId) {
+  _matcherEnTok.forEach(function(t){  if (t.linkId===linkId) t.linkId=null; });
+  _matcherTgtTok.forEach(function(t){ if (t.linkId===linkId) t.linkId=null; });
+  _matcherLinks = _matcherLinks.filter(function(l){ return l.id !== linkId; });
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+  if (!_matcherLinks.length) document.getElementById('matcherExtractBtn').disabled = true;
+  renderMatcherTokens();
+  renderMatcherLinks();
+  updateMatcherActionBar();
+}
+
+function renderMatcherLinks() {
+  var sec  = document.getElementById('matcherLinkedSection');
+  var list = document.getElementById('matcherLinkedList');
+  if (!_matcherLinks.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  list.innerHTML = _matcherLinks.map(function(l, i) {
+    var col = MATCHER_COLORS[i % MATCHER_COLORS.length];
+    return '<div class="matcher-link-card" style="border-left:3px solid ' + col.border + '">' +
+      '<span class="matcher-link-en">' + esc(l.enWords.join(' ')) + '</span>' +
+      '<span class="matcher-link-arr">↔</span>' +
+      '<span class="matcher-link-tgt">' + esc(l.tgtWords.join(' ')) + '</span>' +
+      '<button class="matcher-link-del" onclick="unlinkPair(\'' + l.id + '\')" title="Remove">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function clearMatcherSel() {
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+  renderMatcherTokens();
+  updateMatcherActionBar();
+}
+
+function clearMatcher() {
+  _matcherPair   = null;
+  _matcherEnTok  = [];
+  _matcherTgtTok = [];
+  _matcherLinks  = [];
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+  renderMatcher();
+  toast('Matcher cleared','inf');
+}
+
+function clearMatcher() {
+  _matcherPair   = null;
+  _matcherEnTok  = [];
+  _matcherTgtTok = [];
+  _matcherLinks  = [];
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+  renderMatcher();
+  toast('Matcher cleared','inf');
+}
+
+function extractMatcherPhrases() {
+  if (!_matcherLinks.length) { toast('No links to extract','inf'); return; }
+  var added = 0;
+  _matcherLinks.forEach(function(l) {
+    var enStr  = l.enWords.join(' ').toLowerCase().trim();
+    var tgtStr = l.tgtWords.join(' ').trim();
+    if (!enStr || !tgtStr) return;
+    var exists = APP.phrases.some(function(p){
+      return p.en.toLowerCase()===enStr && p.pdt===tgtStr;
+    });
+    if (!exists) {
+      APP.phrases.push({
+        id: uid(), en: enStr, pdt: tgtStr,
+        category: 'common', confidence: 85,
+        verified: true, source: 'matcher', added: today()
+      });
+      added++;
+    }
+  });
+  saveApp();
+  renderPhrases();
+  updateBadges();
+  var skipped = _matcherLinks.length - added;
+  toast(added + ' phrase' + (added!==1?'s':'') + ' added' + (skipped ? ' · ' + skipped + ' already existed' : ''), 'ok');
+  _matcherLinks  = [];
+  _matcherEnSel  = [];
+  _matcherTgtSel = [];
+  _matcherEnTok.forEach(function(t){ t.linkId=null; });
+  _matcherTgtTok.forEach(function(t){ t.linkId=null; });
+  renderMatcherTokens();
+  renderMatcherLinks();
+  document.getElementById('matcherExtractBtn').disabled = true;
+}
+
+init();
+</script>
+
+<!-- ── WIZARD OVERLAY ── -->
+<div id="wizardOverlay" style="position:fixed;inset:0;background:rgba(10,13,18,0.97);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6)">
+    <!-- Wizard header -->
+    <div style="padding:28px 28px 0">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px" id="wizStep">Step 1 of 3</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px" id="wizTitle">Welcome to PCT Translator</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6" id="wizDesc">What language are you translating into?</div>
+    </div>
+    <!-- Wizard screens -->
+    <div id="wizBody" style="padding:24px 28px">
+
+      <!-- Screen 1: language names -->
+      <div id="wizScreen1">
+        <div class="field">
+          <label style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Target Language Name <span style="color:var(--red)">*</span></label>
+          <input type="text" id="wizTargetName" placeholder="e.g. Welsh, Scots Gaelic, Haitian Creole" style="width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--font)" oninput="wizPreview()">
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Native Name <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+          <input type="text" id="wizNativeName" placeholder="e.g. Cymraeg, Gàidhlig, Kreyòl ayisyen" style="width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--font)">
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">ISO 639-3 Code <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+          <input type="text" id="wizIso" placeholder="e.g. cym, gla, hat, pdt" maxlength="6" style="width:160px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--mono)">
+        </div>
+        <div style="margin-top:14px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text)">
+            <input type="checkbox" id="wizRtl" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer">
+            Right-to-left language
+            <span style="font-size:11px;color:var(--text3)">(Arabic, Hebrew, Urdu&hellip;)</span>
+          </label>
+        </div>
+        <div style="margin-top:8px;padding:10px 14px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--text2)">
+          Source language: <strong style="color:var(--text)">English</strong> (fixed in v1.0)
+        </div>
+      </div>
+
+      <!-- Screen 2: PDF hints -->
+      <div id="wizScreen2" style="display:none">
+        <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">
+          If you'll import PDFs, the tool needs to tell EN from target files apart. Enter a snippet that appears in your target-language PDF filename.
+        </div>
+        <div class="field">
+          <label style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">English PDF hint</label>
+          <input type="text" id="wizHintEn" value="_E_" style="width:160px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--mono)">
+          <div style="font-size:11px;color:var(--text3);margin-top:5px">e.g. mwb<strong>_E_</strong>202607.pdf</div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label style="font-size:11px;color:var(--text2);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Target language PDF hint <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+          <input type="text" id="wizHintTarget" placeholder="e.g. LWX, NDS, CYM" style="width:160px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--mono)">
+          <div style="font-size:11px;color:var(--text3);margin-top:5px">Leave blank if unsure — you can update later</div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:16px;padding:10px 14px;background:var(--surface2);border-radius:var(--r)">
+          ℹ Using HTML files only? Skip this step.
+        </div>
+      </div>
+
+      <!-- Screen 3: Confirm -->
+      <div id="wizScreen3" style="display:none">
+        <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:16px 20px;margin-bottom:20px">
+          <div style="font-size:12px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">Your Configuration</div>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><td style="color:var(--text2);padding:4px 0;width:140px">Source language</td><td style="color:var(--text);font-weight:600">English</td></tr>
+            <tr><td style="color:var(--text2);padding:4px 0">Target language</td><td style="color:var(--accent);font-weight:600" id="confTarget">—</td></tr>
+            <tr><td style="color:var(--text2);padding:4px 0">Native name</td><td style="color:var(--text)" id="confNative">—</td></tr>
+            <tr><td style="color:var(--text2);padding:4px 0">ISO code</td><td style="color:var(--text);font-family:var(--mono)" id="confIso">—</td></tr>
+            <tr><td style="color:var(--text2);padding:4px 0">PDF hint (EN)</td><td style="color:var(--text);font-family:var(--mono)" id="confHintEn">_E_</td></tr>
+            <tr><td style="color:var(--text2);padding:4px 0">PDF hint (target)</td><td style="color:var(--text);font-family:var(--mono)" id="confHintT">—</td></tr>
+            <tr><td style="color:var(--text2);padding:4px 0">Right-to-left</td><td style="color:var(--text);font-family:var(--mono)" id="confRtl">No</td></tr>
+          </table>
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6">
+          App title: <span style="color:var(--text);font-weight:600" id="confTitle">—</span><br>
+          Phrase library will start <strong style="color:var(--text)">empty</strong>. Build it as you work, or import a profile.
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard footer -->
+    <div style="padding:0 28px 24px;display:flex;justify-content:space-between;align-items:center">
+      <button class="btn btn-ghost btn-sm" id="wizBack" onclick="wizNav(-1)" style="display:none">← Back</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-sm" id="wizNext" onclick="wizNav(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS MODAL ── -->
+<div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">⚙ Language Settings</div>
+    <div class="field">
+      <label>Target Language Name</label>
+      <input type="text" id="setTargetName" placeholder="e.g. Welsh">
+    </div>
+    <div class="field">
+      <label>Native Name <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+      <input type="text" id="setNativeName" placeholder="e.g. Cymraeg">
+    </div>
+    <div class="field">
+      <label>ISO Code <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+      <input type="text" id="setIso" placeholder="e.g. cym" maxlength="6">
+    </div>
+    <div class="field">
+      <label>English PDF hint</label>
+      <input type="text" id="setHintEn" placeholder="_E_">
+    </div>
+    <div class="field">
+      <label>Target PDF hint <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+      <input type="text" id="setHintTarget" placeholder="e.g. LWX, NDS">
+    </div>
+    <div class="field" style="margin-top:6px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:normal;font-size:13px;letter-spacing:0;text-transform:none">
+        <input type="checkbox" id="setRtl" style="accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer">
+        Right-to-left language
+        <span style="font-size:11px;color:var(--text3)">(Arabic, Hebrew, Urdu&hellip;)</span>
+      </label>
+    </div>
+    <div id="settingsWarn" style="display:none;background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--gold);margin-top:8px">
+      ⚠ Changing language will clear your corpus and phrases. Export first.
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost btn-sm" onclick="exportProfile()">↓ Export Profile</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">↑ Import Profile<input type="file" accept=".json" onchange="importProfile(event)" style="display:none"></label>
+      <button class="btn btn-ghost btn-sm" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="danger-zone">
+      <div class="danger-zone-title">&#9888; Danger Zone</div>
+      <p>Permanently deletes all corpus pairs, phrases, and sessions from this browser. Cannot be undone.</p>
+      <button class="btn btn-sm" style="background:var(--red-dim);border:1px solid rgba(244,112,103,.4);color:var(--red);width:100%" onclick="showResetConfirm()">&#128465; Reset Everything</button>
+      <div id="resetConfirmRow" style="display:none;margin-top:8px;gap:8px;display:none">
+        <p style="color:var(--red);font-size:12px;margin-bottom:8px">&#128721; Are you sure? Type <strong>RESET</strong> to confirm:</p>
+        <input type="text" id="resetConfirmInput" placeholder="Type RESET" style="width:100%;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="hideResetConfirm()">Cancel</button>
+          <button class="btn btn-sm" style="flex:1;background:var(--red);color:#fff;border:none" onclick="confirmReset()">Wipe All Data</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.log('SW failed:', err); });
+  });
+}
+</script>
+</body>
+</html>
