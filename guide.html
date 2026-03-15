@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCT Translator — Interactive User Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@400;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1208;
+  --paper: #f5f0e8;
+  --cream: #ede7d4;
+  --accent: #2d6a4f;
+  --accent2: #b5451b;
+  --gold: #c9a84c;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Playfair Display', serif;
+  --sans: 'Instrument Sans', sans-serif;
+  --shadow: 0 4px 24px rgba(26,18,8,0.13);
+  --r: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ink);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── COVER ── */
+#cover {
+  min-height: 100vh;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+#cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 80%, rgba(45,106,79,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 20%, rgba(201,168,76,0.12) 0%, transparent 60%);
+}
+
+.cover-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.cover-title {
+  font-family: var(--serif);
+  font-size: clamp(48px, 10vw, 96px);
+  font-weight: 900;
+  color: var(--paper);
+  line-height: 0.95;
+  text-align: center;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.cover-title em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+.cover-sub {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: rgba(245,240,232,0.45);
+  letter-spacing: 2px;
+  margin-bottom: 48px;
+  position: relative;
+}
+
+.cover-desc {
+  max-width: 520px;
+  text-align: center;
+  color: rgba(245,240,232,0.7);
+  font-size: 16px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+  position: relative;
+}
+
+.cover-btn {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--paper);
+  border: none;
+  padding: 16px 40px;
+  border-radius: var(--r);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  box-shadow: 0 0 0 0 rgba(45,106,79,0.4);
+}
+.cover-btn:hover {
+  background: #3a8a65;
+  box-shadow: 0 0 0 8px rgba(45,106,79,0.15);
+  transform: translateY(-2px);
+}
+
+.cover-chapters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 40px;
+  position: relative;
+}
+
+.cover-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(245,240,232,0.4);
+  border: 1px solid rgba(245,240,232,0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ── GUIDE SHELL ── */
+#guide { display: none; }
+
+.guide-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: #111008;
+  border-right: 1px solid rgba(245,240,232,0.07);
+  padding: 24px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold);
+  padding: 0 20px 20px;
+  border-bottom: 1px solid rgba(245,240,232,0.07);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.sidebar-logo span { color: rgba(245,240,232,0.3); }
+
+.nav-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(245,240,232,0.25);
+  padding: 12px 20px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  color: rgba(245,240,232,0.5);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nav-item:hover { color: var(--paper); background: rgba(245,240,232,0.04); }
+.nav-item.active {
+  color: var(--paper);
+  border-left-color: var(--accent);
+  background: rgba(45,106,79,0.1);
+}
+
+.nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+
+.nav-badge {
+  margin-left: auto;
+  background: rgba(45,106,79,0.3);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.progress-bar {
+  margin: auto 20px 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(245,240,232,0.07);
+}
+
+.progress-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(245,240,232,0.3);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.progress-track {
+  height: 3px;
+  background: rgba(245,240,232,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+  background: var(--paper);
+  padding: 0;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* ── CHAPTER ── */
+.chapter { display: none; }
+.chapter.active { display: block; }
+
+.chapter-hero {
+  background: var(--ink);
+  padding: 56px 56px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chapter-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.3;
+}
+
+.chapter-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.chapter-title {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 48px);
+  color: var(--paper);
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.chapter-lead {
+  font-size: 16px;
+  color: rgba(245,240,232,0.6);
+  line-height: 1.7;
+  max-width: 600px;
+}
+
+.chapter-body {
+  padding: 48px 56px;
+  max-width: 860px;
+}
+
+/* ── MOCKUP PHONE ── */
+.phone-frame {
+  width: 300px;
+  background: #1a1a2e;
+  border-radius: 36px;
+  padding: 12px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.phone-screen {
+  background: #f5f0e8;
+  border-radius: 26px;
+  overflow: hidden;
+  min-height: 500px;
+  position: relative;
+}
+
+.phone-topbar {
+  background: #1a1208;
+  padding: 10px 14px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.phone-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #2d6a4f;
+  font-weight: 600;
+}
+
+.phone-logo em { color: #c9a84c; font-style: normal; }
+
+.phone-toggle {
+  width: 28px; height: 16px;
+  background: #2d6a4f;
+  border-radius: 8px;
+  position: relative;
+}
+.phone-toggle::after {
+  content: '';
+  position: absolute;
+  right: 3px; top: 3px;
+  width: 10px; height: 10px;
+  background: white;
+  border-radius: 50%;
+}
+
+.phone-content { padding: 12px; }
+
+.phone-tab-bar {
+  display: flex;
+  background: white;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 0 2px;
+}
+
+.phone-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  color: #888;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.phone-tab.active { color: #2d6a4f; font-weight: 600; }
+.phone-tab-icon { font-size: 16px; }
+
+/* ── STEP CARDS ── */
+.steps { display: flex; flex-direction: column; gap: 0; margin: 32px 0; }
+
+.step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0 20px;
+  position: relative;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 23px; top: 56px;
+  width: 2px;
+  bottom: 0;
+  background: linear-gradient(to bottom, var(--accent), rgba(45,106,79,0.1));
+}
+
+.step-num {
+  width: 48px; height: 48px;
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.step-body { padding-bottom: 36px; padding-top: 10px; }
+
+.step-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.step-desc {
+  color: #4a4030;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ── MOCKUP SCREENS ── */
+.mockup {
+  background: white;
+  border: 1px solid rgba(26,18,8,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  font-family: var(--sans);
+}
+
+.mockup-bar {
+  background: var(--ink);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mockup-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #2d6a4f;
+  font-weight: 600;
+}
+.mockup-logo em { color: var(--gold); font-style: normal; }
+
+.mockup-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.mockup-tab {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(245,240,232,0.4);
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mockup-tab.active {
+  background: rgba(45,106,79,0.3);
+  color: #2d6a4f;
+}
+
+.mockup-body { padding: 14px; background: #f0ebe0; }
+
+.mockup-section-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.upload-card {
+  border: 2px dashed rgba(45,106,79,0.3);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  background: white;
+  margin-bottom: 8px;
+}
+
+.upload-card-icon { font-size: 24px; margin-bottom: 6px; }
+.upload-card-title { font-weight: 600; font-size: 12px; color: var(--ink); }
+.upload-card-desc { font-size: 10px; color: #888; margin-top: 3px; }
+
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+.m-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.m-btn-primary { background: #2d6a4f; color: white; }
+.m-btn-ghost { background: white; color: var(--ink); border: 1px solid rgba(0,0,0,0.15); }
+
+.pair-row {
+  background: white;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.pair-check {
+  width: 16px; height: 16px;
+  background: #2d6a4f;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 10px; flex-shrink: 0;
+}
+
+.align-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.align-col {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.align-col-hdr {
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.align-col-hdr.en { background: #e8f5e9; color: #2d6a4f; }
+.align-col-hdr.pdt { background: #fff3e0; color: #b5451b; }
+
+.align-row {
+  padding: 6px 10px;
+  font-size: 10px;
+  color: #333;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.del-btn {
+  color: #ccc;
+  cursor: pointer;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.pill-red { background: #ffebee; color: #c62828; }
+.pill-green { background: #e8f5e9; color: #2d6a4f; }
+
+.corpus-pair {
+  background: white;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.corpus-pair-en { font-size: 11px; color: var(--ink); font-weight: 500; margin-bottom: 3px; }
+.corpus-pair-pdt { font-size: 11px; color: #b5451b; }
+.corpus-pair-meta { font-size: 9px; color: #aaa; font-family: var(--mono); margin-top: 4px; }
+
+.phrase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e8f5e9;
+  color: #2d6a4f;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin: 2px;
+  font-weight: 500;
+}
+
+.prompt-box-demo {
+  background: #1a1208;
+  color: #c9e8d0;
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.6;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.ai-input-demo {
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 10px;
+  color: #aaa;
+  background: white;
+  min-height: 60px;
+  margin-bottom: 8px;
+}
+
+.segment-card {
+  background: white;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.1);
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.segment-en { padding: 8px 10px; font-size: 10px; color: #555; border-bottom: 1px solid rgba(0,0,0,0.06); }
+.segment-pdt { padding: 8px 10px; font-size: 10px; color: var(--ink); font-weight: 500; }
+.segment-actions { padding: 6px 10px; background: #f9f7f3; display: flex; gap: 6px; }
+
+.queue-item {
+  background: white;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-left: 3px solid #2d6a4f;
+}
+.queue-title { font-size: 11px; font-weight: 600; color: var(--ink); }
+.queue-meta { font-size: 9px; color: #aaa; font-family: var(--mono); margin-top: 3px; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.callout-tip { background: #e8f5e9; border-left: 3px solid #2d6a4f; }
+.callout-warn { background: #fff8e1; border-left: 3px solid #f9a825; }
+.callout-info { background: #e3f2fd; border-left: 3px solid #1565c0; }
+
+.callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+.callout-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2a2a2a;
+}
+
+.callout-text strong { font-weight: 600; display: block; margin-bottom: 3px; }
+
+/* ── INTERACTIVE DEMO ── */
+.demo-container {
+  background: var(--cream);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  border: 1px solid rgba(26,18,8,0.1);
+}
+
+.demo-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demo-label::before {
+  content: '▶';
+  font-size: 8px;
+}
+
+/* ── FEATURE GRID ── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.feature-card {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(245,240,232,0.07);
+}
+
+.feature-icon { font-size: 24px; margin-bottom: 10px; }
+.feature-name { font-family: var(--serif); font-size: 17px; margin-bottom: 6px; }
+.feature-desc { font-size: 13px; color: rgba(245,240,232,0.55); line-height: 1.6; }
+
+/* ── NAV ARROWS ── */
+.chapter-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 56px 40px;
+  border-top: 1px solid rgba(26,18,8,0.1);
+  margin-top: 16px;
+}
+
+.nav-arrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 10px 18px;
+  border: 1px solid rgba(45,106,79,0.3);
+  border-radius: var(--r);
+  transition: all 0.2s;
+  background: none;
+}
+
+.nav-arrow:hover {
+  background: rgba(45,106,79,0.08);
+  border-color: var(--accent);
+}
+
+.nav-arrow:disabled { opacity: 0.3; cursor: default; }
+
+.chapter-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(26,18,8,0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dot.active { background: var(--accent); width: 20px; border-radius: 3px; }
+
+/* ── GLOSSARY TERM ── */
+.term {
+  display: inline;
+  border-bottom: 1px dashed rgba(45,106,79,0.5);
+  color: var(--accent);
+  cursor: help;
+  position: relative;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .guide-layout { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: auto; top: auto;
+    flex-direction: row;
+    padding: 0;
+    border-right: none;
+    border-top: 1px solid rgba(245,240,232,0.07);
+    z-index: 100;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+  .sidebar-logo, .nav-section-label, .progress-bar, .nav-badge { display: none; }
+  .nav-item {
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    font-size: 10px;
+    border-left: none;
+    border-top: 2px solid transparent;
+    min-width: 64px;
+    text-align: center;
+  }
+  .nav-item.active { border-top-color: var(--accent); border-left-color: transparent; }
+  .nav-icon { font-size: 18px; width: auto; }
+  .main { max-height: calc(100vh - 70px); }
+  .chapter-hero, .chapter-body { padding: 28px 20px; }
+  .chapter-nav { padding: 20px; }
+  .upload-grid { grid-template-columns: 1fr; }
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chapter.active .chapter-hero,
+.chapter.active .chapter-body {
+  animation: fadeUp 0.4s ease both;
+}
+.chapter.active .chapter-body { animation-delay: 0.1s; }
+
+/* ── HIGHLIGHT PULSE ── */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45,106,79,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(45,106,79,0); }
+}
+
+.highlight-demo {
+  animation: pulse 2s ease infinite;
+  border-radius: 6px;
+}
+
+/* ── INTERACTIVE TABS IN MOCKUP ── */
+.demo-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.demo-tab {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: white;
+  transition: all 0.15s;
+}
+.demo-tab.active { background: #2d6a4f; color: white; border-color: #2d6a4f; }
+
+.demo-panel { display: none; }
+.demo-panel.active { display: block; }
+
+h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--ink);
+  margin: 32px 0 12px;
+}
+
+p { color: #3a3020; line-height: 1.75; margin-bottom: 14px; font-size: 15px; }
+ul { padding-left: 20px; margin-bottom: 14px; }
+li { color: #3a3020; line-height: 1.8; font-size: 15px; }
+code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(45,106,79,0.1);
+  color: #2d6a4f;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+hr { border: none; border-top: 1px solid rgba(26,18,8,0.1); margin: 28px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══ COVER ══ -->
+<div id="cover">
+  <div class="cover-eyebrow">User Guide · v2.1</div>
+  <div class="cover-title">PCT<em>//</em><br>Translator</div>
+  <div class="cover-sub">PARALLEL CORPUS TRANSLATION TOOL</div>
+  <div class="cover-desc">
+    A complete interactive guide to building your parallel translation corpus — from uploading source files to producing verified parallel sentence pairs.
+  </div>
+  <button class="cover-btn" onclick="startGuide()">Open Guide →</button>
+  <div class="cover-chapters">
+    <span class="cover-chip">Overview</span>
+    <span class="cover-chip">Builder</span>
+    <span class="cover-chip">Alignment Studio</span>
+    <span class="cover-chip">Corpus</span>
+    <span class="cover-chip">Phrases</span>
+    <span class="cover-chip">Translator</span>
+    <span class="cover-chip">Queue</span>
+    <span class="cover-chip">Export</span>
+  </div>
+</div>
+
+<!-- ══ GUIDE ══ -->
+<div id="guide">
+<div class="guide-layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">PCT<span>//</span>Translator <span>Guide</span></div>
+
+  <div class="nav-section-label">Chapters</div>
+
+  <div class="nav-item active" onclick="goTo(0)" id="nav0">
+    <span class="nav-icon">🗺</span> Overview
+    <span class="nav-badge">START</span>
+  </div>
+  <div class="nav-item" onclick="goTo(1)" id="nav1">
+    <span class="nav-icon">🔨</span> Builder
+  </div>
+  <div class="nav-item" onclick="goTo(2)" id="nav2">
+    <span class="nav-icon">⚡</span> Alignment Studio
+  </div>
+  <div class="nav-item" onclick="goTo(3)" id="nav3">
+    <span class="nav-icon">📚</span> Corpus
+  </div>
+  <div class="nav-item" onclick="goTo(4)" id="nav4">
+    <span class="nav-icon">📖</span> Phrases
+  </div>
+  <div class="nav-item" onclick="goTo(5)" id="nav5">
+    <span class="nav-icon">🧩</span> Matcher
+  </div>
+  <div class="nav-item" onclick="goTo(6)" id="nav6">
+    <span class="nav-icon">✍️</span> Translator
+  </div>
+  <div class="nav-item" onclick="goTo(7)" id="nav7">
+    <span class="nav-icon">✅</span> Queue
+  </div>
+  <div class="nav-item" onclick="goTo(8)" id="nav8">
+    <span class="nav-icon">💾</span> Export & Tips
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-label">PROGRESS</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:12%"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main" id="mainScroll">
+
+  <!-- ══ CH 0: OVERVIEW ══ -->
+  <div class="chapter active" id="ch0">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 00 · Overview</div>
+      <div class="chapter-title">What is the<br>PCT Translator?</div>
+      <div class="chapter-lead">A single-file web app that helps you build a parallel corpus between any two languages and use it to produce high-quality AI-assisted translations.</div>
+    </div>
+    <div class="chapter-body">
+
+      <p>This tool was built to solve a real problem: many languages lack sufficient digital translation resources. The PCT Translator lets you systematically extract, align, and store parallel sentence pairs from bilingual source documents — then use those pairs to guide AI translation.</p>
+
+      <p>Everything runs <strong>in your browser</strong>. No server, no account, no internet required after the page loads. Your data is stored locally.</p>
+
+      <h3>The Five Tabs</h3>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔨</div>
+          <div class="feature-name">Builder</div>
+          <div class="feature-desc">Upload HTML or PDF bilingual source files. The tool pairs them up and sends them to Alignment Studio.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <div class="feature-name">Corpus</div>
+          <div class="feature-desc">Your growing library of verified EN↔target sentence pairs. Load, browse, search, edit, and delete.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📖</div>
+          <div class="feature-name">Phrases</div>
+          <div class="feature-desc">Key vocabulary — religious terms, grammar patterns, proper nouns. Auto-injected into every translation prompt.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✍️</div>
+          <div class="feature-name">Translator</div>
+          <div class="feature-desc">Paste English text, build a context-rich prompt, paste the AI response back, then approve segments.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✅</div>
+          <div class="feature-name">Queue</div>
+          <div class="feature-desc">Completed translation sessions. Review, export as .txt, or save back to corpus.</div>
+        </div>
+      </div>
+
+      <h3>The Workflow at a Glance</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Upload source files</div>
+            <div class="step-desc">Go to <strong>Builder</strong>. Upload matched HTML pairs or two EPUBs. The tool auto-detects which file is EN and which is target language from filenames and content.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Align paragraphs</div>
+            <div class="step-desc"><strong>Alignment Studio</strong> opens automatically. Trim EN and target paragraph lists until they match, then accept.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Grow the corpus</div>
+            <div class="step-desc">Accepted pairs land in the <strong>Corpus</strong> tab. Repeat for more articles — your corpus grows over time.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Translate with AI</div>
+            <div class="step-desc">Paste English into the <strong>Translator</strong>. Build Prompt pulls matched corpus examples + phrases. Copy → paste into Claude/GPT/Gemini.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Review and save</div>
+            <div class="step-desc">Paste the AI response back. Enter Review Mode, approve segments, save to the <strong>Queue</strong>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-text">
+          <strong>First time?</strong>
+          Start by loading a <code>jw_corpus.txt</code> file directly in the Corpus tab if you already have one. That immediately gives you examples for the Translator without needing to go through the Builder.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" disabled>← Prev</button>
+      <div class="chapter-dots" id="dots0"></div>
+      <button class="nav-arrow" onclick="goTo(1)">Next: Builder →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 1: BUILDER ══ -->
+  <div class="chapter" id="ch1">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 01 · Builder</div>
+      <div class="chapter-title">Uploading<br>Source Files</div>
+      <div class="chapter-lead">The Builder is where new material enters the system. You can upload HTML or EPUB bilingual source files — the tool extracts clean paragraph text automatically. Use <strong>Files / EPUB</strong> mode for single articles or two EPUB files, or switch to <strong>Folder Scan</strong> mode to batch-process a whole folder of article pairs.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>Three Ways to Add Material</h3>
+
+      <div class="demo-container">
+        <div class="demo-label">Interactive Demo — click each tile to learn more</div>
+
+        <div class="demo-tabs">
+          <div class="demo-tab active" onclick="demoTab(this,'folder')">📁 Folder</div>
+          <div class="demo-tab" onclick="demoTab(this,'files')">📄 2 HTML Files</div>
+          <div class="demo-tab" onclick="demoTab(this,'epub')">📗 2 EPUBs</div>
+        </div>
+
+        <div class="demo-panel active" id="demo-folder">
+          <div class="mockup">
+            <div class="mockup-bar">
+              <div class="mockup-logo">PDT<em>//</em>Translator</div>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-section-title">Corpus Builder</div>
+              <div class="upload-grid">
+                <div class="upload-card highlight-demo" style="border-color:#2d6a4f;border-width:2px">
+                  <div class="upload-card-icon">📁</div>
+                  <div class="upload-card-title">Choose Folder</div>
+                  <div class="upload-card-desc">Matches all *_en.html + *_pdt.html pairs by name</div>
+                </div>
+                <div class="upload-card">
+                  <div class="upload-card-icon">📄</div>
+                  <div class="upload-card-title">Choose 2 Files</div>
+                  <div class="upload-card-desc">Select one EN and one target HTML file</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout callout-info">
+            <div class="callout-icon">📁</div>
+            <div class="callout-text">
+              <strong>Best for bulk imports</strong>
+              Select a folder containing multiple article pairs. Files must be named like <code>1_en.html</code> + <code>1_pdt.html</code>, <code>2_en.html</code> + <code>2_pdt.html</code>, etc. The tool matches them by number prefix automatically.
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-panel" id="demo-files">
+          <div class="mockup">
+            <div class="mockup-bar">
+              <div class="mockup-logo">PDT<em>//</em>Translator</div>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-section-title">Corpus Builder</div>
+              <div class="upload-grid">
+                <div class="upload-card">
+                  <div class="upload-card-icon">📁</div>
+                  <div class="upload-card-title">Choose Folder</div>
+                  <div class="upload-card-desc">Matches all *_en.html + *_pdt.html pairs</div>
+                </div>
+                <div class="upload-card highlight-demo" style="border-color:#2d6a4f;border-width:2px">
+                  <div class="upload-card-icon">📄</div>
+                  <div class="upload-card-title">Choose 2 Files</div>
+                  <div class="upload-card-desc">Select one EN and one target HTML file</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="callout callout-info">
+            <div class="callout-icon">📄</div>
+            <div class="callout-text">
+              <strong>Best for a single article</strong>
+              Pick exactly two HTML files — one English, one target language. Filenames can be anything; just make sure you select both at once (hold Ctrl/Cmd). The tool detects which is which from the content.
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-panel" id="demo-epub">
+          <div class="mockup">
+            <div class="mockup-bar">
+              <div class="mockup-logo">PDT<em>//</em>Translator</div>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-section-title">Corpus Builder</div>
+              <div class="upload-card highlight-demo" style="border-color:#2d6a4f;border-width:2px;margin-bottom:8px">
+                <div class="upload-card-icon">📋</div>
+                <div class="upload-card-title">Choose 2 PDFs</div>
+                <div class="upload-card-desc">e.g. mwb_E_202607.pdf + mwb_LWX_202607.pdf</div>
+              </div>
+            </div>
+          </div>
+          <div class="callout callout-info">
+            <div class="callout-icon">📋</div>
+            <div class="callout-text">
+              <strong>Best for JW workbooks</strong>
+              Select one English EPUB and one target-language EPUB. The tool auto-detects which is EN and which is target from the filename. Text is extracted and cleaned automatically — including fixing the doubled-character rendering in English JW PDFs.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Switching Modes
+      </h3>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">Use the <strong>📄 Files / EPUB</strong> tab for single articles or EPUB pairs. Switch to <strong>📁 Folder Scan</strong> to bulk-import a whole folder of HTML pairs at once — the tool matches files by name pattern (<span class="mono">*_en.html</span> + <span class="mono">*_pdt.html</span>), shows you a checklist of detected pairs, and processes all selected ones in one go.</p>
+      <h3>After Upload: Detected Pairs</h3>
+      <p>Once files are processed, a <strong>Detected Pairs</strong> list appears below the upload cards. Each pair shows its article name with a checkbox.</p>
+
+      <div class="mockup">
+        <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+        <div class="mockup-body">
+          <div class="mockup-section-title">Detected Pairs · 3 pairs detected · 3 selected</div>
+          <div class="pair-row">
+            <div class="pair-check">✓</div>
+            <div style="flex:1;font-size:11px;font-weight:500">mwb202607 — article 1</div>
+            <div style="font-size:10px;color:#aaa;font-family:monospace">pending</div>
+          </div>
+          <div class="pair-row">
+            <div class="pair-check">✓</div>
+            <div style="flex:1;font-size:11px;font-weight:500">mwb202607 — article 2</div>
+            <div style="font-size:10px;color:#aaa;font-family:monospace">pending</div>
+          </div>
+          <div class="pair-row" style="opacity:0.5">
+            <div class="pair-check" style="background:#ccc">✓</div>
+            <div style="flex:1;font-size:11px;font-weight:500">mwb202607 — article 3</div>
+            <div style="font-size:10px;color:#aaa;font-family:monospace">deselected</div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="m-btn m-btn-ghost">Select All</button>
+            <button class="m-btn m-btn-ghost">Deselect All</button>
+            <button class="m-btn m-btn-primary" style="margin-left:auto">Push to Corpus →</button>
+          </div>
+        </div>
+      </div>
+
+      <p>Uncheck any article you don't want to include. When ready, press <strong>Push to Corpus →</strong>. This opens the Alignment Studio for the first selected pair.</p>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text">
+          <strong>Don't close the Alignment Studio mid-session</strong>
+          If you skip or cancel, that article is skipped but the others continue. Skipped articles won't be in your corpus — you'd need to re-upload them.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(0)">← Overview</button>
+      <div class="chapter-dots" id="dots1"></div>
+      <button class="nav-arrow" onclick="goTo(2)">Next: Alignment Studio →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 2: ALIGNMENT STUDIO ══ -->
+  <div class="chapter" id="ch2">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 02 · Alignment Studio</div>
+      <div class="chapter-title">Pairing English<br>&amp; Target Language</div>
+      <div class="chapter-lead">The Alignment Studio is the heart of the corpus-building process. It shows you extracted paragraphs side-by-side and lets you reorder and trim them until they match.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>How It Works</h3>
+      <p>When you push an article to corpus, the tool extracts paragraphs from both the English and target-language source. These rarely align perfectly — EN and target documents often have different numbers of paragraphs due to layout differences, footnotes, or section headers.</p>
+
+      <p>Your job is to remove paragraphs from either side until the counts match. Then you click <strong>Accept & Push</strong>.</p>
+
+      <div class="mockup" style="margin:24px 0">
+        <div class="mockup-bar">
+          <div class="mockup-logo">PDT<em>//</em>Translator <span style="color:#c9a84c;font-size:9px;margin-left:8px">Alignment Studio</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="pill pill-red">Mismatch</span>
+            <span style="font-size:10px;color:rgba(245,240,232,0.4)">EN: 8 · Target: 6</span>
+          </div>
+        </div>
+        <div class="mockup-body" style="padding:8px">
+          <div class="align-grid">
+            <div class="align-col">
+              <div class="align-col-hdr en">🇬🇧 English · 8 paragraphs</div>
+              <div class="align-row"><span>Jehovah deserves our obedience even when we don't understand the reason.</span><span class="del-btn">✕</span></div>
+              <div class="align-row"><span>Jeremiah obeyed despite being puzzled by God's instructions.</span><span class="del-btn">✕</span></div>
+              <div class="align-row" style="background:#ffebee"><span style="color:#999;text-decoration:line-through;font-size:9px">Page header text — remove me</span><span class="del-btn" style="color:#e53935">✕</span></div>
+              <div class="align-row"><span>Christians strive to imitate Jeremiah's example.</span><span class="del-btn">✕</span></div>
+            </div>
+            <div class="align-col">
+              <div class="align-col-hdr pdt">🌾 Target · 6 paragraphs</div>
+              <div class="align-row"><span>Jehowa vedeent daut, daut wie am jehuarsom sent, uk wan wie nich vestonen.</span><span class="del-btn">✕</span></div>
+              <div class="align-row"><span>Jeremia wia jehuarsom, wan hee uk nich vestonen kunn.</span><span class="del-btn">✕</span></div>
+              <div class="align-row"><span>Wie aus Christen wellen krakjt soo jehuarsom sennen aus Jeremia.</span><span class="del-btn">✕</span></div>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:8px">
+            <button class="m-btn m-btn-ghost">⏭ Skip</button>
+            <button class="m-btn m-btn-primary" style="opacity:0.4;cursor:not-allowed">✅ Accept & Push</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>Step-by-Step</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Read both columns</div>
+            <div class="step-desc">Scan the EN and target paragraphs. They should tell the same story in the same order. Spot anything that doesn't belong — page headers, footnotes, navigation text.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Delete extra paragraphs</div>
+            <div class="step-desc">Tap the <strong>✕</strong> button next to any paragraph that doesn't have a match on the other side. If a paragraph is in the wrong row — for example EN row 5 matches target row 7 — drag the <strong>⠿</strong> grip handle on the left edge of the cell up or down to move it into place. Each column reorders independently. The count badge updates in real time.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Match the counts</div>
+            <div class="step-desc">When EN and target paragraph counts are equal, the pill changes from <span class="pill pill-red" style="font-size:11px;padding:2px 6px">Mismatch</span> to <span class="pill pill-green" style="font-size:11px;padding:2px 6px">Match ✓</span> and the Accept button activates.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Accept & Push</div>
+            <div class="step-desc">Click <strong>✅ Accept & Push</strong>. The pairs are written to your Corpus, phrases are auto-extracted, and the Studio moves to the next article in the queue.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-text">
+          <strong>Quality tip</strong>
+          Fewer, well-matched pairs are better than many misaligned ones. If an article has wildly different paragraph counts and you can't figure out what to delete, use <strong>⏭ Skip</strong> — it's better than pushing garbage pairs.
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text">
+          <strong>Order matters</strong>
+          Paragraph 1 in English will be paired with paragraph 1 in the target language. Make sure you delete from matching positions — don't delete a real paragraph just to make numbers work out.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(1)">← Builder</button>
+      <div class="chapter-dots" id="dots2"></div>
+      <button class="nav-arrow" onclick="goTo(3)">Next: Corpus →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 3: CORPUS ══ -->
+  <div class="chapter" id="ch3">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 03 · Corpus</div>
+      <div class="chapter-title">Your Translation<br>Database</div>
+      <div class="chapter-lead">The Corpus tab is your growing library of verified parallel sentence pairs. Every translation you make draws from this well.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>Loading an Existing Corpus</h3>
+      <p>If you already have a <code>jw_corpus.txt</code> file, go to the Corpus tab and press <strong>⬆ Load .txt</strong> or drop the file on the upload zone. The tool reads its own export format automatically.</p>
+
+      <div class="mockup" style="margin:20px 0">
+        <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+        <div class="mockup-body">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <div style="background:white;border-radius:6px;padding:8px 14px;text-align:center;flex:1;border:1px solid rgba(0,0,0,0.08)">
+              <div style="font-size:20px;font-weight:700;color:#2d6a4f;font-family:monospace">247</div>
+              <div style="font-size:9px;color:#aaa;letter-spacing:1px">PAIRS</div>
+            </div>
+            <div style="background:white;border-radius:6px;padding:8px 14px;text-align:center;flex:1;border:1px solid rgba(0,0,0,0.08)">
+              <div style="font-size:20px;font-weight:700;color:#2d6a4f;font-family:monospace">12</div>
+              <div style="font-size:9px;color:#aaa;letter-spacing:1px">ARTICLES</div>
+            </div>
+            <div style="background:white;border-radius:6px;padding:8px 14px;text-align:center;flex:1;border:1px solid rgba(0,0,0,0.08)">
+              <div style="font-size:20px;font-weight:700;color:#2d6a4f;font-family:monospace">56</div>
+              <div style="font-size:9px;color:#aaa;letter-spacing:1px">PHRASES</div>
+            </div>
+            <div style="background:white;border-radius:6px;padding:8px 14px;text-align:center;flex:1;border:1px solid rgba(0,0,0,0.08)">
+              <div style="font-size:20px;font-weight:700;color:#2d6a4f;font-family:monospace">247</div>
+              <div style="font-size:9px;color:#aaa;letter-spacing:1px">VERIFIED</div>
+            </div>
+          </div>
+          <div class="corpus-pair">
+            <div class="corpus-pair-en">Jehovah deserves our obedience even when we don't understand the direction.</div>
+            <div class="corpus-pair-pdt">Jehowa vedeent daut, daut wie am jehuarsom sent, uk wan wie de Aunwiesunk nich vestonen kjennen.</div>
+            <div class="corpus-pair-meta">📄 mwb202607 · verified · <span style="color:#2d6a4f">✏️ edit</span> &nbsp; ✕</div>
+          </div>
+          <div class="corpus-pair">
+            <div class="corpus-pair-en">Those who trust in Jehovah will flourish like a tree planted by water.</div>
+            <div class="corpus-pair-pdt">Soone, waut opp Jehowa vetruen, woaren een scheenet Läwen haben.</div>
+            <div class="corpus-pair-meta">📄 mwb202607 · verified · <span style="color:#2d6a4f">✏️ edit</span> &nbsp; ✕</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Searching and Filtering</h3>
+      <p>Use the search bar to find pairs by English or target-language text. Article filter chips appear at the top once you have multiple articles — click one to show only pairs from that source.</p>
+
+      <h3>Editing Pairs</h3>
+      <p>Every pair has an <strong>✏️ edit</strong> button. Use this to fix typos in the target-language side, or to update the English if it was misextracted from the PDF. Changes save immediately to local storage.</p>
+
+      <h3>Adding Pairs Manually</h3>
+      <p>Press <strong>+ Add Pair</strong> in the top right. A modal lets you type an English sentence, its target-language translation, and the source article name. Useful for adding individual key sentences or corrections.</p>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-text">
+          <strong>The corpus improves every translation</strong>
+          The Translator tab searches your corpus for sentences similar to what you're translating. More corpus = better context examples = better AI output. Aim for 200+ pairs before heavy translation use.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(2)">← Alignment Studio</button>
+      <div class="chapter-dots" id="dots3"></div>
+      <button class="nav-arrow" onclick="goTo(4)">Next: Phrases →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 4: PHRASES ══ -->
+  <div class="chapter" id="ch4">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 04 · Phrases</div>
+      <div class="chapter-title">Vocabulary &<br>Key Terms</div>
+      <div class="chapter-lead">The Phrase Library holds individual word mappings — religious terms, grammar patterns, proper nouns. These are injected into every prompt automatically.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>Why Phrases Matter</h3>
+      <p>Your target language may have specific vocabulary that AI models don't know well. The phrase library ensures that every translation prompt includes locked-in term mappings — so the AI can't guess wrong on words like <em>Jehowa</em>, <em>Bieebel</em>, or <em>Fräd</em>.</p>
+
+      <div class="mockup" style="margin:20px 0">
+        <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+        <div class="mockup-body">
+          <div style="margin-bottom:10px;display:flex;gap:4px;flex-wrap:wrap">
+            <div class="m-btn m-btn-primary" style="font-size:10px;padding:4px 8px">All</div>
+            <div class="m-btn m-btn-ghost" style="font-size:10px;padding:4px 8px">⛪ Religious</div>
+            <div class="m-btn m-btn-ghost" style="font-size:10px;padding:4px 8px">📐 Grammar</div>
+            <div class="m-btn m-btn-ghost" style="font-size:10px;padding:4px 8px">💬 Common</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div class="corpus-pair" style="padding:8px">
+              <div style="font-size:10px;font-weight:600">Jehovah → <span style="color:#2d6a4f">Jehowa</span></div>
+              <div class="corpus-pair-meta">⛪ Religious · ✅ Verified</div>
+            </div>
+            <div class="corpus-pair" style="padding:8px">
+              <div style="font-size:10px;font-weight:600">prayer → <span style="color:#2d6a4f">Jebäd</span></div>
+              <div class="corpus-pair-meta">⛪ Religious · ✅ Verified</div>
+            </div>
+            <div class="corpus-pair" style="padding:8px">
+              <div style="font-size:10px;font-weight:600">peace → <span style="color:#2d6a4f">Fräd</span></div>
+              <div class="corpus-pair-meta">⛪ Religious · ✅ Verified</div>
+            </div>
+            <div class="corpus-pair" style="padding:8px">
+              <div style="font-size:10px;font-weight:600">Bible → <span style="color:#2d6a4f">Bieebel</span></div>
+              <div class="corpus-pair-meta">⛪ Religious · ✅ Verified</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Confidence Levels</h3>
+      <ul>
+        <li><strong>✅ Verified</strong> — Confirmed by a native speaker. Always injected into prompts.</li>
+        <li><strong>🟡 Suggested</strong> — Auto-extracted or uncertain. Injected but flagged in the prompt.</li>
+        <li><strong>🔵 Auto</strong> — Extracted from corpus text automatically. Review before relying on these.</li>
+      </ul>
+
+      <h3>Adding Phrases Manually</h3>
+      <p>Press <strong>+ Add Phrase</strong>. Fill in the English word, its target-language equivalent, the category (Religious, Grammar, Common, or Proper Noun), and set the confidence. Native speaker confirmations should always be marked <strong>Verified</strong>.</p>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-text">
+          <strong>Auto-extraction happens on every Push to Corpus</strong>
+          When you accept aligned pairs, the tool scans them for common word patterns using co-occurrence analysis and auto-adds candidates to the phrase library as "Auto" confidence. High-confidence matches (≥80%) appear in a <strong>Suggestions</strong> banner at the top of the Phrases tab — tap <strong>✅ Add ≥80%</strong> to approve them all at once, or review individually. Review the rest periodically and upgrade the good ones to Verified.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(3)">← Corpus</button>
+      <div class="chapter-dots" id="dots4"></div>
+      <button class="nav-arrow" onclick="goTo(5)">Next: Matcher →</button>
+    </div>
+  </div>
+
+
+  <!-- ══ CH 5: MATCHER ══ -->
+  <div class="chapter" id="ch5">
+    <div class="chapter-hdr">
+      <div class="chapter-num">Chapter 05 · Matcher</div>
+      <div class="chapter-title">🧩 Phrase<br>Matcher</div>
+      <div class="chapter-lead">The Matcher is a word-level alignment tool. Pick any sentence pair from your Corpus, deconstruct both sides into individual word tokens, then tap to group and link words across languages. Every connection you confirm gets written directly to your Phrase Library as a verified entry.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>Opening the Matcher</h3>
+      <p>Go to the <strong>Corpus</strong> tab. Every sentence pair now has a 🧩 button alongside the ✏️ edit and ✕ delete buttons. Tap it — the Matcher tab opens instantly with that pair pre-loaded. No copy/paste needed.</p>
+
+      <div class="mockup" style="margin-bottom:20px">
+        <div class="mockup-bar"><div class="mockup-logo">PCT<em>//</em>Translator</div></div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:8px;letter-spacing:1px">CORPUS</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px">English</div>
+            <div style="font-size:12px;margin-bottom:6px">Jehovah deserves our obedience even when we don't understand.</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px">Target</div>
+            <div style="font-size:12px;color:var(--accent);margin-bottom:8px">Jehowa vedeent daut, daut wie am jehuarsom sent.</div>
+            <div style="display:flex;gap:6px">
+              <span style="font-size:11px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;color:var(--text2)">✏️</span>
+              <span style="font-size:11px;padding:3px 8px;border:1px solid var(--accent);border-radius:4px;color:var(--accent);background:var(--accent-dim)">🧩</span>
+              <span style="font-size:11px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;color:var(--text2)">✕</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>How It Works</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Tokens appear</div>
+            <div class="step-desc">Both the English and target sentences are split into individual word chips. English on top, target below. Each word is a separate tappable token.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Select tokens on both sides</div>
+            <div class="step-desc">Tap a word to select it (it highlights in accent colour). Tap more adjacent words to extend into a phrase — for example tap <strong>our</strong> then <strong>obedience</strong> to form the phrase "our obedience". Do the same on the target side for its equivalent.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Link ↔</div>
+            <div class="step-desc">Once you have selections on both sides, the action bar appears showing a preview: <em>"our obedience" ↔ "wie am jehuarsom sent"</em>. Tap <strong>Link ↔</strong> to confirm the pair. The tokens get colour-coded — pair 1 green, pair 2 blue, pair 3 gold, and so on.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Repeat for each phrase</div>
+            <div class="step-desc">Continue linking across the sentence. Structural words with no direct equivalent — articles, prepositions — can be left unlinked. The Linked Pairs list below the tokens shows everything you've connected so far. Tap ✕ on any linked pair to remove it.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Extract Phrases</div>
+            <div class="step-desc">Tap <strong>⬇ Extract Phrases</strong>. Every linked pair is written to your Phrase Library as a <strong>Verified</strong> entry at 85% confidence. Duplicates are skipped silently. The tokens reset so you can load another pair.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Tapping a linked token</h3>
+      <p>If you tap a token that's already linked, it <strong>unlinks that entire pair</strong> — both sides reset to neutral. This is faster than hunting for the ✕ button in the list below.</p>
+
+      <div class="tip-box">
+        <strong>💡 Best use</strong> — The Matcher shines on pairs where the auto-extractor missed terms, or where you want to lock in proper nouns, religious terms, or multi-word phrases with full confidence. Even a few minutes per session builds the phrase library quickly.
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(4)">← Phrases</button>
+      <div class="chapter-dots" id="dots5"></div>
+      <button class="nav-arrow" onclick="goTo(6)">Next: Translator →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 5: TRANSLATOR ══ -->
+  <div class="chapter" id="ch6">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 06 · Translator</div>
+      <div class="chapter-title">The Translation<br>Workflow</div>
+      <div class="chapter-lead">The Translator tab is a structured three-step workflow: Write → Prompt → Review. It turns your corpus and phrases into a rich context package for any AI model.</div>
+    </div>
+    <div class="chapter-body">
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Step 1 · Write — Paste your English text</div>
+            <div class="step-desc">
+              Paste the English article text into the left pane. Press <strong>Analyze</strong> to run the pre-processor — it scans for matching phrases from your library and shows you what will be locked in. If nothing matches, a diagnostic toast tells you exactly why: empty library, corpus not yet pushed, or simply no matches in this text.
+            </div>
+            <div class="mockup" style="margin-top:12px">
+              <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+              <div class="mockup-body">
+                <div style="background:white;border-radius:6px;border:1px solid rgba(0,0,0,0.1);padding:10px;min-height:80px;font-size:11px;color:#555;margin-bottom:8px">
+                  Jehovah deserves our obedience even when we don't understand the reason behind his direction. Jeremiah showed us a powerful example of this kind of trust...
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:10px;color:#aaa;font-family:monospace">47 words</span>
+                  <div style="display:flex;gap:6px">
+                    <button class="m-btn m-btn-ghost" style="font-size:10px">Analyze</button>
+                    <button class="m-btn m-btn-primary" style="font-size:10px">Build Prompt →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Step 2 · Prompt — Copy and paste into AI</div>
+            <div class="step-desc">
+              Press <strong>Build Prompt →</strong>. The tool assembles a complete prompt including: your verified phrase mappings, the best-matching corpus example pairs, and the English text to translate. Copy it and paste into Claude, ChatGPT, or Gemini.
+            </div>
+            <div class="mockup" style="margin-top:12px">
+              <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+              <div class="mockup-body">
+                <div class="prompt-box-demo">
+                  You are a target-language translator. Use these verified term mappings:<br>
+                  • Jehovah → Jehowa<br>
+                  • prayer → Jebäd<br>
+                  • peace → Fräd<br><br>
+                  Reference pairs from our corpus:<br>
+                  EN: Those who trust in Jehovah will flourish...<br>
+                  Target: Soone, waut opp Jehowa vetruen...<br><br>
+                  Now translate: "Jehovah deserves our obedience..."
+                </div>
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                  <button class="m-btn m-btn-ghost" style="font-size:10px">Change Model</button>
+                  <button class="m-btn m-btn-primary" style="font-size:10px">Copy Prompt</button>
+                </div>
+                <div style="margin-top:10px">
+                  <div style="font-size:10px;color:#888;margin-bottom:6px;font-family:monospace;letter-spacing:1px">PASTE AI RESPONSE</div>
+                  <div class="ai-input-demo">Paste the target-language translation from your AI here…</div>
+                  <button class="m-btn m-btn-primary" style="font-size:10px;width:100%">Enter Review Mode →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Step 3 · Review — Approve segments</div>
+            <div class="step-desc">
+              Paste the AI's target-language response into the text area, then press <strong>Enter Review Mode →</strong>. The text is split into segments (paragraph or sentence level). Review each one, edit if needed, and approve.
+            </div>
+            <div class="mockup" style="margin-top:12px">
+              <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+              <div class="mockup-body">
+                <div class="segment-card">
+                  <div class="segment-en">Jehovah deserves our obedience even when we don't understand.</div>
+                  <div class="segment-pdt">Jehowa vedeent daut, daut wie am jehuarsom sent, uk wan wie nich vestonen.</div>
+                  <div class="segment-actions">
+                    <button class="m-btn m-btn-ghost" style="font-size:9px">✏️ Edit</button>
+                    <button class="m-btn m-btn-primary" style="font-size:9px;background:#2d6a4f">✓ Approve</button>
+                  </div>
+                </div>
+                <div class="segment-card" style="opacity:0.5">
+                  <div class="segment-en">Jeremiah showed a powerful example of trust.</div>
+                  <div class="segment-pdt">Jeremia wies ons een stoakjet Biespel von Vetruen.</div>
+                  <div class="segment-actions">
+                    <button class="m-btn m-btn-ghost" style="font-size:9px">✏️ Edit</button>
+                    <button class="m-btn m-btn-primary" style="font-size:9px;background:#2d6a4f">✓ Approve</button>
+                  </div>
+                </div>
+                <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+                  <button class="m-btn m-btn-ghost" style="font-size:10px">Approve All</button>
+                  <button class="m-btn m-btn-primary" style="font-size:10px">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Model Picker</h3>
+      <p>Tap the model indicator in the top bar to switch between <strong>Claude</strong>, <strong>ChatGPT/GPT-4</strong>, and <strong>Gemini</strong>. This doesn't connect to any API — it just adjusts the prompt wording to get the best results from each model's style.</p>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-text">
+          <strong>On mobile:</strong> The translator works as a single-pane stepped flow. Step 1 fills the screen, then Build Prompt → slides you to Step 2, and Enter Review Mode → takes you to Step 3. Use the back chevron ‹ to go back.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(5)">← Matcher</button>
+      <div class="chapter-dots" id="dots6"></div>
+      <button class="nav-arrow" onclick="goTo(7)">Next: Queue →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 6: QUEUE ══ -->
+  <div class="chapter" id="ch7">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 07 · Queue</div>
+      <div class="chapter-title">Completed<br>Translations</div>
+      <div class="chapter-lead">Every translation session you save lands in the Queue. Think of it as your completed work inbox — ready to export, review, or push back into the corpus.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>What's in the Queue</h3>
+
+      <div class="mockup" style="margin:20px 0">
+        <div class="mockup-bar"><div class="mockup-logo">PDT<em>//</em>Translator</div></div>
+        <div class="mockup-body">
+          <div class="queue-item">
+            <div class="queue-title">Jeremiah 13–15 · Week of July 6</div>
+            <div class="queue-meta">✅ 6 approved · 📅 2026-07-08 · 🤖 Claude</div>
+            <div style="margin-top:8px;display:flex;gap:6px">
+              <button class="m-btn m-btn-ghost" style="font-size:9px">👁 Review</button>
+              <button class="m-btn m-btn-ghost" style="font-size:9px">⬇ Export .txt</button>
+              <button class="m-btn m-btn-ghost" style="font-size:9px">🗑 Delete</button>
+            </div>
+          </div>
+          <div class="queue-item" style="border-left-color:#c9a84c">
+            <div class="queue-title">Jeremiah 16–17 · Week of July 13</div>
+            <div class="queue-meta">⏳ 4 approved · 2 pending · 📅 2026-07-10</div>
+            <div style="margin-top:8px;display:flex;gap:6px">
+              <button class="m-btn m-btn-ghost" style="font-size:9px">👁 Review</button>
+              <button class="m-btn m-btn-ghost" style="font-size:9px">⬇ Export .txt</button>
+              <button class="m-btn m-btn-ghost" style="font-size:9px">🗑 Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Exporting a Session</h3>
+      <p>Press <strong>⬇ Export .txt</strong> on any queue item to download a plain-text file with all approved EN↔target segment pairs. This format can be shared, printed, or used to populate other systems.</p>
+
+      <h3>Clearing the Queue</h3>
+      <p>The <strong>Clear Approved</strong> button in the top right removes all fully-approved sessions. Partially-approved sessions are left in place. Use this to keep the queue tidy after exporting.</p>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-text">
+          <strong>Queue data is stored locally</strong>
+          Everything in the Queue is saved in your browser's local storage. It persists between sessions on the same device, but won't transfer to another device unless you use the Export button.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(6)">← Translator</button>
+      <div class="chapter-dots" id="dots7"></div>
+      <button class="nav-arrow" onclick="goTo(7)">Next: Export & Tips →</button>
+    </div>
+  </div>
+
+  <!-- ══ CH 7: EXPORT & TIPS ══ -->
+  <div class="chapter" id="ch8">
+    <div class="chapter-hero">
+      <div class="chapter-num">Chapter 08 · Export & Tips</div>
+      <div class="chapter-title">Saving Your Work<br>& Pro Tips</div>
+      <div class="chapter-lead">How to back up your corpus, move it between devices, and get the most out of the tool.</div>
+    </div>
+    <div class="chapter-body">
+
+      <h3>⬇ Export All</h3>
+      <p>The <strong>⬇ Export</strong> button in the top-right bar downloads a single <code>pdt_export.json</code> file containing your entire corpus, phrase library, and queue. This is your backup.</p>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text">
+          <strong>Export regularly</strong>
+          Your data lives in the browser. If you clear browser data, use private/incognito mode, or switch browsers, it's gone. Export after every significant session.
+        </div>
+      </div>
+
+      <h3>Moving to Another Device</h3>
+      <p>Export on device A → transfer the HTML file and the JSON export to device B → open the HTML file → go to Corpus → Load .txt (or drag the JSON onto the corpus drop zone). Everything transfers.</p>
+
+      <h3>Theme Toggle</h3>
+      <p>The ☀️/🌙 toggle in the top bar switches between light and dark mode. Your preference is saved automatically.</p>
+
+      <hr>
+
+      <h3>Pro Tips</h3>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-name">Match carefully</div>
+          <div class="feature-desc">Delete spurious EN and target paragraphs before accepting. One bad pair misleads every future translation that matches it.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔢</div>
+          <div class="feature-name">Sentence mode</div>
+          <div class="feature-desc">In Review Mode, switch granularity to "Sentence" for better control on long articles. Paragraph mode is faster; sentence mode is more precise.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⛪</div>
+          <div class="feature-name">Religious terms first</div>
+          <div class="feature-desc">Before translating any new topic, add any domain-specific terms to the Phrase Library as Verified. These are injected before the AI sees your text.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <div class="feature-name">PDF vs HTML</div>
+          <div class="feature-desc">HTML source files from jw.org give cleaner paragraphs. PDFs work but may have extraction artifacts — always review in Alignment Studio before accepting.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-name">Analyze first</div>
+          <div class="feature-desc">Always press Analyze before Build Prompt. It shows you which phrases matched — if your key terms aren't being caught, add them to the Phrase Library first.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔄</div>
+          <div class="feature-name">Feedback loop</div>
+          <div class="feature-desc">Good translations should go back into the corpus via the Builder or Add Pair. Your corpus grows and future translations get better automatically.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip" style="margin-top:32px">
+        <div class="callout-icon">🌱</div>
+        <div class="callout-text">
+          <strong>The goal: a living corpus</strong>
+          This tool gets better the more you use it. Every pair you align, every phrase you verify, every translation you approve feeds back into better future prompts. Aim to treat the corpus as a long-term asset — not just a one-time import.
+        </div>
+      </div>
+
+    </div>
+    <div class="chapter-nav">
+      <button class="nav-arrow" onclick="goTo(7)">← Queue</button>
+      <div class="chapter-dots" id="dots8"></div>
+      <button class="nav-arrow" onclick="goTo(0)" style="border-color:var(--gold);color:var(--gold)">↩ Back to Start</button>
+    </div>
+  </div>
+
+</main>
+</div>
+</div>
+
+<script>
+var currentChapter = 0;
+var totalChapters = 9;
+var visited = [true, false, false, false, false, false, false, false, false];
+
+function startGuide() {
+  document.getElementById('cover').style.display = 'none';
+  document.getElementById('guide').style.display = 'block';
+  renderDots();
+  updateProgress();
+}
+
+function goTo(n) {
+  // Hide current
+  document.getElementById('ch' + currentChapter).classList.remove('active');
+  document.getElementById('nav' + currentChapter).classList.remove('active');
+
+  currentChapter = n;
+  visited[n] = true;
+
+  // Show new
+  document.getElementById('ch' + n).classList.add('active');
+  document.getElementById('nav' + n).classList.add('active');
+
+  // Scroll to top
+  document.getElementById('mainScroll').scrollTo({ top: 0, behavior: 'smooth' });
+
+  updateProgress();
+  renderDots();
+}
+
+function updateProgress() {
+  var pct = Math.round(((currentChapter + 1) / totalChapters) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderDots() {
+  for (var i = 0; i < totalChapters; i++) {
+    var el = document.getElementById('dots' + i);
+    if (!el) continue;
+    var html = '';
+    for (var j = 0; j < totalChapters; j++) {
+      var cls = j === currentChapter ? 'dot active' : 'dot';
+      html += '<div class="' + cls + '" onclick="goTo(' + j + ')"></div>';
+    }
+    el.innerHTML = html;
+  }
+}
+
+function demoTab(el, panelId) {
+  var tabs = el.parentNode.querySelectorAll('.demo-tab');
+  tabs.forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+
+  var panels = el.closest('.demo-container').querySelectorAll('.demo-panel');
+  panels.forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('demo-' + panelId).classList.add('active');
+}
+
+// Init dots on load
+renderDots();
+</script>
+</body>
+</html>

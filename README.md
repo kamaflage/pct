@@ -2,7 +2,7 @@
 
 A portable AI-powered translation corpus builder and prompt generator. Works with any language pair — built for Plautdietsch.
 
-**[Live App →](https://kamaflage.github.io/parallel-corpus-translator/)**
+**[Live App →](https://kamaflage.github.io/parallel-corpus-translator/)** · **[User Guide →](https://kamaflage.github.io/parallel-corpus-translator/guide.html)**
 
 ---
 
@@ -51,6 +51,7 @@ Parallel Corpus Translator helps you build a verified bilingual sentence corpus 
 | File | Purpose |
 |------|---------|
 | `index.html` | The full app — single file, zero dependencies |
+| `guide.html` | Interactive user guide |
 | `manifest.json` | PWA manifest for installability |
 | `sw.js` | Service worker for offline support |
 | `icon-192.png` | App icon (192×192) |
