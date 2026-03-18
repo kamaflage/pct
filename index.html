@@ -640,6 +640,22 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 .danger-zone-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:10px;font-family:var(--mono)}
 .danger-zone p{font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5}
 #resetConfirmRow{display:none;margin-top:8px;gap:8px}
+
+/* ── HELP MODAL ── */
+#helpModal .modal { max-width:560px; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.help-ver { font-family:var(--mono); font-size:11px; color:var(--text3); text-align:center; margin-bottom:16px; padding:6px 12px; background:var(--surface2); border-radius:6px; }
+.help-ver span { color:var(--accent); font-weight:600; }
+.help-section { margin-bottom:18px; }
+.help-section-title { font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px; font-weight:600; }
+.help-row { display:flex; align-items:flex-start; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.help-row:last-child { border-bottom:none; }
+.help-tab { font-family:var(--mono); font-size:10px; background:var(--surface2); border:1px solid var(--border2); border-radius:4px; padding:2px 8px; color:var(--text); flex-shrink:0; min-width:70px; text-align:center; }
+.help-desc { color:var(--text2); line-height:1.5; flex:1; }
+.help-workflow { counter-reset:wf; }
+.help-wf-step { display:flex; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px; color:var(--text2); }
+.help-wf-step:last-child { border-bottom:none; }
+.help-wf-num { counter-increment:wf; width:22px; height:22px; border-radius:50%; background:var(--accent); color:var(--bg); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:var(--mono); }
+
 </style>
 <!-- PDF.js for in-browser PDF parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -673,6 +689,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         <button class="toggle-pill" onclick="toggleTheme()" title="Light / Dark"></button>
       </div>
 
+      <button class="btn btn-ghost btn-sm" onclick="openModal('helpModal')" title="Quick Help" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">❓</button>
       <button class="btn btn-ghost btn-sm" onclick="exportAll()">⬇ Export</button>
       <button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Language settings">⚙</button>
     </div>
@@ -1152,6 +1169,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
+var APP_VERSION = 'v2.2';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1408,6 +1426,8 @@ function importProfile(e) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function init() {
+  // Version display
+  var hv = document.getElementById('helpVer'); if(hv) hv.textContent = APP_VERSION;
   // One-time migration from legacy key (v4.x PDT builds)
   try {
     var _legacy = localStorage.getItem('pdtv2');
@@ -3405,5 +3425,48 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+
+<!-- HELP MODAL -->
+<div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
+  <div class="modal">
+    <div class="modal-title">Quick Reference</div>
+    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.2</span></div>
+
+    <div class="help-section">
+      <div class="help-section-title">Tabs</div>
+      <div class="help-row"><span class="help-tab">Builder</span><span class="help-desc">Load HTML or EPUB article pairs, align paragraphs, push to Corpus.</span></div>
+      <div class="help-row"><span class="help-tab">Corpus</span><span class="help-desc">Your verified parallel sentence pairs. Search, edit, or delete.</span></div>
+      <div class="help-row"><span class="help-tab">Phrases</span><span class="help-desc">Terminology library auto-extracted from your corpus. Pre-processes every translation.</span></div>
+      <div class="help-row"><span class="help-tab">Matcher</span><span class="help-desc">Visually link words between a sentence pair to extract new phrase mappings.</span></div>
+      <div class="help-row"><span class="help-tab">Translator</span><span class="help-desc">Paste source text → Build Prompt → copy into any LLM → paste response back → approve segments.</span></div>
+      <div class="help-row"><span class="help-tab">Queue</span><span class="help-desc">Completed translations waiting for final review.</span></div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">Workflow</div>
+      <div class="help-workflow">
+        <div class="help-wf-step"><div class="help-wf-num">1</div><div>Set up your language profile via the ⚙ Settings gear — source language, target language, file naming hints.</div></div>
+        <div class="help-wf-step"><div class="help-wf-num">2</div><div>In <strong>Builder</strong>: load matching HTML pairs. Review alignment, then Push to Corpus.</div></div>
+        <div class="help-wf-step"><div class="help-wf-num">3</div><div>In <strong>Phrases</strong>: run auto-extract after building your corpus. Review and verify key terms.</div></div>
+        <div class="help-wf-step"><div class="help-wf-num">4</div><div>In <strong>Translator</strong>: paste source text → Analyze → Build Prompt → copy into your LLM.</div></div>
+        <div class="help-wf-step"><div class="help-wf-num">5</div><div>Paste the LLM response back into the app → Enter Review Mode → approve segments → Save.</div></div>
+        <div class="help-wf-step"><div class="help-wf-num">6</div><div>Use <strong>⬇ Export</strong> in the topbar to back up your full corpus and phrase library.</div></div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">Tips</div>
+      <div class="help-row"><span class="help-tab">File names</span><span class="help-desc">Name files with language codes e.g. <code>article_en.html</code> + <code>article_pdt.html</code> for auto-detection.</span></div>
+      <div class="help-row"><span class="help-tab">Alignment</span><span class="help-desc">JW publications auto-align by paragraph number. Other HTML uses positional alignment — review carefully.</span></div>
+      <div class="help-row"><span class="help-tab">Backup</span><span class="help-desc">Export regularly — all data is in your browser. Clearing browser data will erase it.</span></div>
+      <div class="help-row"><span class="help-tab">Models</span><span class="help-desc">Switch AI models from the pill in the topbar. Claude works best for structured prompts.</span></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeModal('helpModal')" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Got it</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
