@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.6</title>
+<title>Parallel Corpus Translator v2.12</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -164,7 +164,7 @@ html{height:100dvh;height:-webkit-fill-available;}
   .mobile-nav{display:flex !important}
   .logo em{display:none}
   .model-pill span.model-label{display:none}
-  .panel{padding:14px}
+  .panel{padding:14px;overflow-y:auto;height:100%;min-height:0;-webkit-overflow-scrolling:touch;}
   .phrase-grid{grid-template-columns:1fr}
   .stats-row{flex-wrap:wrap}
   .stat-card{min-width:calc(50% - 5px);flex:none}
@@ -248,7 +248,7 @@ html{height:100dvh;height:-webkit-fill-available;}
 .pair-text.pdt{color:var(--accent);font-weight:500}
 
 /* ── FILTER BAR ── */
-.filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:10;background:var(--bg);padding:8px 0 6px;margin-top:-8px;}
 .filter-chip{
   padding:4px 12px;border-radius:999px;font-size:11px;font-weight:600;
   cursor:pointer;border:1px solid var(--border2);background:none;
@@ -404,13 +404,22 @@ html{height:100dvh;height:-webkit-fill-available;}
 /* ── MODALS ── */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
-  display:flex;align-items:center;justify-content:center;padding:16px;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:16px;padding-top:env(safe-area-inset-top,16px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+@media(min-height:700px){
+  .modal-overlay{align-items:center;}
 }
 .modal-overlay.hidden{display:none}
 .modal{
   background:var(--surface);border:1px solid var(--border2);
   border-radius:var(--r3);width:100%;max-width:540px;padding:24px;
   box-shadow:var(--shadow);
+  max-height:90vh;
+  max-height:90dvh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .modal-title{font-size:15px;font-weight:700;margin-bottom:16px}
 .field{margin-bottom:12px}
@@ -744,6 +753,20 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 }
 .paste-mismatch-warn.visible { display:block; }
 
+
+/* Version badge */
+#topbarVer {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  background: rgba(76,175,145,0.12);
+  border: 1px solid rgba(76,175,145,0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
 </style>
 <!-- PDF.js for in-browser PDF parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -753,7 +776,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px">v2.6</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.12</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -1258,7 +1281,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.6';
+var APP_VERSION = 'v2.12';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1299,10 +1322,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.6</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.12</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.6';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.12';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1399,7 +1422,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.6';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.12';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -1517,6 +1540,7 @@ function importProfile(e) {
 function init() {
   // Version display
   var hv = document.getElementById('helpVer'); if(hv) hv.textContent = APP_VERSION;
+  var tv = document.getElementById('topbarVer'); if(tv) tv.textContent = APP_VERSION;
   // One-time migration from legacy key (v4.x PDT builds)
   try {
     var _legacy = localStorage.getItem('pdtv2');
@@ -2064,11 +2088,39 @@ function parseCorpusTxt(text) {
     }
   });
   if (en && pdt) pairs.push({id:uid(),article:currentArticle,en:en,pdt:pdt,verified:true,added:today()});
-  if (!pairs.length) { toast('No pairs found — check format', 'err'); return; }
-  APP.corpus = APP.corpus.concat(pairs);
+  // ── Parse PHRASE LIBRARY section ──
+  var phrases = [];
+  var inPhrases = false;
+  var pEn = null, pPdt = null, pCat = 'common', pConf = 'verified';
+  lines.forEach(function(line) {
+    line = line.trim();
+    if (line === '## PHRASE LIBRARY') { inPhrases = true; return; }
+    if (!inPhrases) return;
+    if (/^TERM:/i.test(line))        { pEn   = line.replace(/^TERM:\s*/i,'').trim(); return; }
+    if (/^PLAUTDIETSCH:/i.test(line)){ pPdt  = line.replace(/^PLAUTDIETSCH:\s*/i,'').trim(); return; }
+    if (/^CATEGORY:/i.test(line)) {
+      var cm = line.match(/CATEGORY:\s*(\S+)/i);
+      var co = line.match(/CONFIDENCE:\s*(\S+)/i);
+      if (cm) pCat  = cm[1].replace(/\s*\|.*/,'').trim();
+      if (co) pConf = co[1].trim();
+      return;
+    }
+    if (line === '---' && pEn && pPdt) {
+      var exists = APP.phrases.some(function(p){ return p.en===pEn; });
+      if (!exists) phrases.push({id:uid(),en:pEn,pdt:pPdt,category:pCat,confidence:pConf,added:today()});
+      pEn=null; pPdt=null; pCat='common'; pConf='verified';
+    }
+  });
+  if (phrases.length) APP.phrases = APP.phrases.concat(phrases);
+
+  if (!pairs.length && !phrases.length) { toast('No pairs or phrases found — check format', 'err'); return; }
+  if (pairs.length) APP.corpus = APP.corpus.concat(pairs);
   saveApp();
   renderCorpus(); renderStats(); var newSugg=runCoOccurrence(); renderPhrases(); updateBadges();
-  toast('Loaded '+pairs.length+' pairs'+(newSugg?' · '+newSugg+' suggestions queued':''),'ok');
+  var msg = '';
+  if (pairs.length)   msg += pairs.length + ' pairs';
+  if (phrases.length) msg += (msg?', ':'')+phrases.length+' phrase'+(phrases.length!==1?'s':'');
+  toast('Loaded ' + msg + (newSugg?' · '+newSugg+' suggestions queued':''), 'ok');
 }
 
 // ── PHRASE EXTRACTION ─────────────────────────────────────────────────────────
@@ -3708,7 +3760,7 @@ if ('serviceWorker' in navigator) {
 <div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
   <div class="modal">
     <div class="modal-title">Quick Reference</div>
-    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.6</span></div>
+    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.12</span></div>
 
     <div class="help-section">
       <div class="help-section-title">Tabs</div>
