@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.2</title>
+<title>Parallel Corpus Translator v2.6</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -47,17 +47,17 @@
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
 }
-html,body{height:100%;overflow:hidden;position:fixed;width:100%}
+html,body{height:100dvh;height:-webkit-fill-available;overflow:hidden;width:100%;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6;transition:background .2s,color .2s}
 
 /* ── LAYOUT ── */
 /* iOS Safari fix: use -webkit-fill-available instead of 100vh */
 .shell{
   display:flex;flex-direction:column;
-  height:100vh;height:-webkit-fill-available;
-  max-height:100vh;max-height:-webkit-fill-available;
+  height:100dvh;height:-webkit-fill-available;
+  width:100%;
 }
-html{height:-webkit-fill-available}
+html{height:100dvh;height:-webkit-fill-available;}
 
 
 /* ── TOPBAR ── */
@@ -177,10 +177,10 @@ html{height:-webkit-fill-available}
 @media(min-width:769px){.mobile-nav{display:none}}
 
 /* ── CONTENT ── */
-.content{flex:1;overflow:hidden;min-height:0;-webkit-overflow-scrolling:touch}
+.content{flex:1 1 auto;overflow:hidden;min-height:0;}
 .panel{
   overflow-y:auto;padding:20px;
-  height:100%;display:none;
+  height:100%;min-height:0;display:none;
   -webkit-overflow-scrolling:touch;
 }
 .panel.active{display:block}
@@ -656,6 +656,94 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 .help-wf-step:last-child { border-bottom:none; }
 .help-wf-num { counter-increment:wf; width:22px; height:22px; border-radius:50%; background:var(--accent); color:var(--bg); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:var(--mono); }
 
+
+/* ── PASTE OVERLAY ── */
+#pasteOverlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:400;
+  flex-direction:column;
+  overflow:hidden;
+}
+#pasteOverlay.open { display:flex; }
+.paste-header {
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.paste-header-title {
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;color:var(--accent);flex:1;
+}
+.paste-body {
+  flex:1;display:flex;gap:0;overflow:hidden;flex-direction:column;
+}
+@media(min-width:600px){ .paste-body { flex-direction:row; } }
+.paste-pane {
+  flex:1;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);overflow:hidden;min-height:0;
+}
+.paste-pane:last-child { border-right:none; }
+.paste-pane-hdr {
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.paste-pane-label { font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3); }
+.paste-pane-count { font-family:var(--mono);font-size:10px;color:var(--accent); }
+.paste-textarea {
+  flex:1;width:100%;border:none;outline:none;resize:none;
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:13px;line-height:1.7;
+  padding:14px 16px;-webkit-overflow-scrolling:touch;
+}
+.paste-textarea::placeholder { color:var(--text3); }
+.paste-footer {
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:10px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;
+}
+.paste-preview { display:none;flex:1;overflow:hidden;flex-direction:column; }
+.paste-preview.visible { display:flex; }
+.paste-preview-body { flex:1;overflow:hidden;display:flex;gap:0; }
+.paste-pair-row {
+  display:flex;border-bottom:1px solid var(--border);
+}
+.paste-pair-row:last-child { border-bottom:none; }
+.paste-pair-cell {
+  flex:1;padding:8px 12px;font-size:12px;color:var(--text2);
+  line-height:1.55;border-right:1px solid var(--border);
+  word-break:break-word;
+}
+.paste-pair-cell:last-child { border-right:none; }
+.paste-pair-num {
+  font-family:var(--mono);font-size:9px;color:var(--text3);
+  margin-bottom:3px;
+}
+.paste-pair-row.mismatch .paste-pair-cell {
+  background:rgba(240,100,74,0.05);
+}
+.paste-preview-col {
+  flex:1;padding:10px 14px;border-right:1px solid var(--border);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.paste-preview-col:last-child { border-right:none; }
+.paste-preview-col-hdr {
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.paste-para {
+  padding:7px 10px;margin-bottom:5px;border-radius:6px;
+  background:var(--surface2);font-size:12px;color:var(--text2);line-height:1.55;
+  border-left:2px solid var(--border2);
+}
+.paste-para-num { font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px; }
+.paste-mismatch-warn {
+  background:rgba(240,100,74,0.08);border:1px solid rgba(240,100,74,0.3);
+  border-left:3px solid #f0644a;border-radius:6px;padding:8px 12px;
+  margin:8px 16px;font-size:12px;color:#f0644a;display:none;
+}
+.paste-mismatch-warn.visible { display:block; }
+
 </style>
 <!-- PDF.js for in-browser PDF parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -665,7 +753,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px">v2.2</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px">v2.6</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -689,9 +777,9 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         <button class="toggle-pill" onclick="toggleTheme()" title="Light / Dark"></button>
       </div>
 
-      <button class="btn btn-ghost btn-sm" onclick="openModal('helpModal')" title="Quick Help" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">❓</button>
       <button class="btn btn-ghost btn-sm" onclick="exportAll()">⬇ Export</button>
       <button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Language settings">⚙</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('helpModal')" title="Quick Help" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">?</button>
     </div>
   </div>
 
@@ -718,6 +806,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
       <div style="display:flex;gap:6px;margin-bottom:10px">
         <button id="builderModeManual" class="filter-chip active" onclick="switchBuilderMode('manual')">📄 Files / EPUB</button>
         <button id="builderModeFolder" class="filter-chip" onclick="switchBuilderMode('folder')">📁 Folder Scan</button>
+        <button id="builderModePaste" class="filter-chip" onclick="openPasteOverlay()" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">✏️ Paste Text</button>
       </div>
 
       <!-- MANUAL SECTION: single files + EPUB -->
@@ -732,7 +821,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
             <div style="font-size:24px;margin-bottom:6px">📄</div>
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">Choose 2 Files</div>
             <div style="font-size:11px;color:var(--text2);line-height:1.5">Select one EN and one target HTML file for a single article</div>
-            <input type="file" id="builderFileInput" multiple accept=".html,.htm" style="position:absolute;width:1px;height:1px;opacity:0" onchange="handleFileInputChange(event)">
+            <input type="file" id="builderFileInput" multiple accept=".html,.htm" style="position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none" onchange="handleFileInputChange(event)">
           </label>
 
         </div>
@@ -742,7 +831,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
             <div style="font-size:24px;margin-bottom:6px">📗</div>
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">Choose 2 EPUBs</div>
             <div style="font-size:11px;color:var(--text2);line-height:1.5">Select one English and one target-language EPUB — paragraphs extracted automatically</div>
-            <input type="file" id="builderEpubInput" multiple accept=".epub" style="position:absolute;width:1px;height:1px;opacity:0" onchange="handleEpubInputChange(event)">
+            <input type="file" id="builderEpubInput" multiple accept=".epub" style="position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none" onchange="handleEpubInputChange(event)">
           </label>
         </div>
 
@@ -759,7 +848,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
             <div style="font-size:24px;margin-bottom:6px">📁</div>
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">Choose Folder</div>
             <div style="font-size:11px;color:var(--text2);line-height:1.5">Scans for <span class="mono" style="font-size:10px">*_en.html</span> + <span class="mono" style="font-size:10px">*_pdt.html</span> pairs — select which to process</div>
-            <input type="file" id="builderFolderInput" webkitdirectory multiple accept=".html,.htm" style="position:absolute;width:1px;height:1px;opacity:0" onchange="handleFolderSelect(event)">
+            <input type="file" id="builderFolderInput" webkitdirectory multiple accept=".html,.htm" style="position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none" onchange="handleFolderSelect(event)">
           </label>
         </div>
 
@@ -817,7 +906,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         </div>
         <div class="btn-row">
           <button class="btn btn-ghost btn-sm" onclick="openModal('addPairModal')">+ Add Pair</button>
-          <label class="btn btn-primary btn-sm" style="cursor:pointer">⬆ Load .txt<input type="file" id="corpusFileInput" accept=".txt,.json" style="position:absolute;width:1px;height:1px;opacity:0" onchange="loadCorpusFile(event)"></label>
+          <label class="btn btn-primary btn-sm" style="cursor:pointer">⬆ Load .txt<input type="file" id="corpusFileInput" accept=".txt,.json" style="position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none" onchange="loadCorpusFile(event)"></label>
         </div>
       </div>
 
@@ -836,7 +925,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         <div style="font-size:30px;margin-bottom:10px">📄</div>
         <div style="font-size:14px;font-weight:600;margin-bottom:6px">Load jw_corpus.txt</div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Drag and drop or click. Or build pairs in the Builder tab.</div>
-        <label class="btn btn-primary btn-sm" style="cursor:pointer">Choose File<input type="file" accept=".txt,.json" style="position:absolute;width:1px;height:1px;opacity:0" onchange="loadCorpusFile(event)"></label>
+        <label class="btn btn-primary btn-sm" style="cursor:pointer">Choose File<input type="file" accept=".txt,.json" style="position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none" onchange="loadCorpusFile(event)"></label>
       </div>
 
       <div id="corpusFilterBar" class="filter-bar" style="display:none">
@@ -1169,7 +1258,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.2';
+var APP_VERSION = 'v2.6';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1210,10 +1299,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.1</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.6</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.1';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.6';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1310,7 +1399,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.1';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.6';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -2759,9 +2848,11 @@ function processFolderPairs() {
   if (!selected.length) { toast('Select at least one pair','inf'); return; }
 
   document.getElementById('processFolderBtn').disabled = true;
-  document.getElementById('folderScanStatus').textContent = 'Processing ' + selected.length + ' pairs…';
+  document.getElementById('folderScanStatus').textContent = 'Reading ' + selected.length + ' pairs…';
 
-  var results = [];
+  // Build _bPairs entries — same structure as single-file path
+  // so they route through Alignment Studio before hitting corpus
+  _bPairs = [];
   var pending = selected.length;
 
   selected.forEach(function(pair) {
@@ -2769,39 +2860,77 @@ function processFolderPairs() {
     var readsLeft = 2;
 
     function onBothRead() {
-      var enParser = new DOMParser();
-      var pdtParser = new DOMParser();
-      var enDoc = enParser.parseFromString(enText, 'text/html');
-      var pdtDoc = pdtParser.parseFromString(pdtText, 'text/html');
+      var domParser = new DOMParser();
+      var enDoc  = domParser.parseFromString(enText,  'text/html');
+      var pdtDoc = domParser.parseFromString(pdtText, 'text/html');
+
       ['script','style','nav','header','footer','aside','figure'].forEach(function(tag) {
-        enDoc.querySelectorAll(tag).forEach(function(el){el.remove();});
-        pdtDoc.querySelectorAll(tag).forEach(function(el){el.remove();});
+        enDoc.querySelectorAll(tag).forEach(function(el){ el.remove(); });
+        pdtDoc.querySelectorAll(tag).forEach(function(el){ el.remove(); });
       });
-      var enParas = [], pdtParas = [];
-      enDoc.querySelectorAll('p,h1,h2,h3,h4,li,blockquote').forEach(function(el){
-        var t=el.textContent.replace(/\s+/g,' ').trim(); if(t.length>15) enParas.push(t);
-      });
-      pdtDoc.querySelectorAll('p,h1,h2,h3,h4,li,blockquote').forEach(function(el){
-        var t=el.textContent.replace(/\s+/g,' ').trim(); if(t.length>8) pdtParas.push(t);
-      });
-      // Deduplicate
-      enParas = enParas.filter(function(p,i,a){return a.indexOf(p)===i;});
-      pdtParas = pdtParas.filter(function(p,i,a){return a.indexOf(p)===i;});
-      var min = Math.min(enParas.length, pdtParas.length);
-      var pairs = [];
-      for(var i=0;i<min;i++){
-        if(enParas[i]&&pdtParas[i]&&enParas[i].length>15&&pdtParas[i].length>8)
-          pairs.push({id:uid(),en:enParas[i],pdt:pdtParas[i],keep:true,article:pair.key});
+
+      // Use same getParas logic as single-file path
+      function getParas(doc) {
+        var out = [];
+        var seen = new Set();
+        doc.querySelectorAll('p').forEach(function(el) {
+          // data-pid paragraph numbering (JW HTML)
+          var pid = el.getAttribute('data-pid');
+          var num = (pid && /^\d+$/.test(pid.trim())) ? parseInt(pid.trim(), 10) : null;
+          var pnEl = el.querySelector('.parNum');
+          if (pnEl) { pnEl.remove(); }
+          var t = el.textContent.replace(/\s+/g,' ').trim();
+          if (t.length < 8) return;
+          if (seen.has(t)) return;
+          seen.add(t);
+          out.push({ num: num, text: t });
+        });
+        // Fallback to broader selectors if no <p> content
+        if (out.length < 3) {
+          seen = new Set();
+          out = [];
+          doc.querySelectorAll('p,h2,h3,h4,li,blockquote').forEach(function(el) {
+            var t = el.textContent.replace(/\s+/g,' ').trim();
+            if (t.length < 8 || seen.has(t)) return;
+            seen.add(t);
+            out.push({ num: null, text: t });
+          });
+        }
+        return out;
       }
-      results.push({ article: pair.key, pairs: pairs });
+
+      var enBlocks  = getParas(enDoc).map(function(p){ return p.text; });
+      var pdtBlocks = getParas(pdtDoc).map(function(p){ return p.text; });
+
+      _bPairs.push({
+        id: uid(), key: pair.key, article: pair.key,
+        enFile: null, pdtFile: null,
+        selected: true, status: 'pending', pairCount: 0,
+        enBlocks: enBlocks, pdtBlocks: pdtBlocks
+      });
+
       pending--;
-      if (pending === 0) finalizeFolderProcess(results);
+      if (pending === 0) {
+        // All files read — route through Alignment Studio
+        document.getElementById('folderScanStatus').textContent =
+          selected.length + ' pairs ready — opening Alignment Studio…';
+        document.getElementById('processFolderBtn').disabled = false;
+        document.getElementById('builderPairsSection').style.display = 'block';
+        renderBuilderPairsList();
+        // Trigger studio via same path as pushToCorpus button
+        _alignQueue  = _bPairs.slice();
+        _alignIdx    = 0;
+        _alignTotals = { added: 0, phrases: 0, processed: 0 };
+        loadAndAlign(0);
+      }
     }
 
-    var r1=new FileReader(); r1.onload=function(e){enText=e.target.result;if(--readsLeft===0)onBothRead();};
-    var r2=new FileReader(); r2.onload=function(e){pdtText=e.target.result;if(--readsLeft===0)onBothRead();};
-    r1.readAsText(pair.enFile,'UTF-8');
-    r2.readAsText(pair.pdtFile,'UTF-8');
+    var r1 = new FileReader();
+    r1.onload = function(e){ enText = e.target.result; if (--readsLeft === 0) onBothRead(); };
+    var r2 = new FileReader();
+    r2.onload = function(e){ pdtText = e.target.result; if (--readsLeft === 0) onBothRead(); };
+    r1.readAsText(pair.enFile, 'UTF-8');
+    r2.readAsText(pair.pdtFile, 'UTF-8');
   });
 }
 
@@ -3267,6 +3396,154 @@ function extractMatcherPhrases() {
 }
 
 init();
+
+
+// ── PASTE TEXT OVERLAY ────────────────────────────────────────────────────────
+
+function splitIntoParagraphs(text) {
+  // Split on one or more blank lines, filter short/empty blocks
+  return text.split(/\n\s*\n/)
+    .map(function(b){ return b.replace(/\s+/g,' ').trim(); })
+    .filter(function(b){ return b.length > 4; });
+}
+
+function onPasteInput() {
+  var enText  = document.getElementById('pasteEnText').value;
+  var tgtText = document.getElementById('pasteTgtText').value;
+  var enBlocks  = splitIntoParagraphs(enText);
+  var tgtBlocks = splitIntoParagraphs(tgtText);
+
+  document.getElementById('pasteEnCount').textContent  = enBlocks.length  + ' paragraph' + (enBlocks.length  !== 1 ? 's' : '');
+  document.getElementById('pasteTgtCount').textContent = tgtBlocks.length + ' paragraph' + (tgtBlocks.length !== 1 ? 's' : '');
+
+  var hasContent = enBlocks.length > 0 && tgtBlocks.length > 0;
+  document.getElementById('pastePreviewBtn').disabled = !hasContent;
+
+  // Update footer status
+  if (!hasContent) {
+    document.getElementById('pasteFooterStatus').textContent = 'Paste text on both sides, then preview the split.';
+  } else if (enBlocks.length !== tgtBlocks.length) {
+    document.getElementById('pasteFooterStatus').textContent =
+      '⚠ ' + enBlocks.length + ' source vs ' + tgtBlocks.length + ' target paragraphs — preview to review';
+  } else {
+    document.getElementById('pasteFooterStatus').textContent =
+      '✓ ' + enBlocks.length + ' paragraph' + (enBlocks.length !== 1 ? 's' : '') + ' on each side — ready to preview';
+  }
+}
+
+function previewPasteSplit() {
+  var enText  = document.getElementById('pasteEnText').value;
+  var tgtText = document.getElementById('pasteTgtText').value;
+  var enBlocks  = splitIntoParagraphs(enText);
+  var tgtBlocks = splitIntoParagraphs(tgtText);
+
+  if (!enBlocks.length || !tgtBlocks.length) return;
+
+  // Render preview
+  var enLabel  = document.getElementById('pasteEnLabel').textContent;
+  var tgtLabel = document.getElementById('pasteTgtLabel').textContent;
+  document.getElementById('pastePreviewEnHdr').textContent  = enLabel  + ' (' + enBlocks.length  + ')';
+  document.getElementById('pastePreviewTgtHdr').textContent = tgtLabel + ' (' + tgtBlocks.length + ')';
+
+  // Render paired rows — EN and TGT side by side, same row
+  var maxLen = Math.max(enBlocks.length, tgtBlocks.length);
+  var pairsHtml = '';
+  for (var pi = 0; pi < maxLen; pi++) {
+    var enB  = enBlocks[pi]  || '';
+    var tgtB = tgtBlocks[pi] || '';
+    var cls  = (enB && !tgtB) || (!enB && tgtB) ? ' mismatch' : '';
+    pairsHtml += '<div class="paste-pair-row' + cls + '">';
+    pairsHtml += '<div class="paste-pair-cell"><div class="paste-pair-num">¶ ' + (pi+1) + '</div>' + esc(enB) + '</div>';
+    pairsHtml += '<div class="paste-pair-cell"><div class="paste-pair-num">¶ ' + (pi+1) + '</div>' + esc(tgtB) + '</div>';
+    pairsHtml += '</div>';
+  }
+  document.getElementById('pastePreviewPairs').innerHTML = pairsHtml;
+
+  // Mismatch warning
+  var warn = document.getElementById('pasteMismatchWarn');
+  if (enBlocks.length !== tgtBlocks.length) {
+    warn.textContent = '⚠ Paragraph count mismatch: ' + enBlocks.length + ' source, ' + tgtBlocks.length +
+      ' target. The Alignment Studio will let you fix this — or go back and edit your text.';
+    warn.classList.add('visible');
+  } else {
+    warn.classList.remove('visible');
+  }
+
+  // Switch to preview view
+  document.getElementById('pasteInputBody').style.display = 'none';
+  document.getElementById('pastePreviewBody').classList.add('visible');
+  document.getElementById('pasteBackBtn').style.display = '';
+  document.getElementById('pasteSendBtn').disabled = false;
+  document.getElementById('pasteFooterStatus').textContent =
+    'Review the split above. Go back to edit, or send to Alignment Studio.';
+}
+
+function showPasteInput() {
+  document.getElementById('pasteInputBody').style.display = '';
+  document.getElementById('pastePreviewBody').classList.remove('visible');
+  document.getElementById('pasteBackBtn').style.display = 'none';
+  document.getElementById('pasteSendBtn').disabled = true;
+  onPasteInput();
+}
+
+function sendPasteToStudio() {
+  var enText  = document.getElementById('pasteEnText').value;
+  var tgtText = document.getElementById('pasteTgtText').value;
+  var enBlocks  = splitIntoParagraphs(enText);
+  var tgtBlocks = splitIntoParagraphs(tgtText);
+
+  if (!enBlocks.length || !tgtBlocks.length) {
+    toast('Paste text on both sides first', 'inf');
+    return;
+  }
+
+  // Build a single _bPairs entry and push to alignment studio
+  var artName = 'Pasted Text — ' + today();
+  _bPairs = [{
+    id: uid(), key: artName, article: artName,
+    enFile: null, pdtFile: null,
+    selected: true, status: 'pending', pairCount: 0,
+    enBlocks: enBlocks, pdtBlocks: tgtBlocks
+  }];
+
+  _alignQueue  = _bPairs.slice();
+  _alignIdx    = 0;
+  _alignTotals = { added: 0, phrases: 0, processed: 0 };
+
+  closePasteOverlay();
+  switchTab('builder');
+  document.getElementById('builderPairsSection').style.display = 'block';
+  renderBuilderPairsList();
+  loadAndAlign(0);
+
+  toast('Opening Alignment Studio…', 'inf');
+}
+
+function openPasteOverlay() {
+  // Update language labels from profile
+  var p = APP.profile;
+  var enName  = 'English (Source)';
+  var tgtName = getTargetName();
+  document.getElementById('pasteEnLabel').textContent  = enName;
+  document.getElementById('pasteTgtLabel').textContent = tgtName;
+  document.getElementById('pastePreviewEnHdr').textContent  = enName;
+  document.getElementById('pastePreviewTgtHdr').textContent = tgtName;
+
+  // Reset to input view
+  showPasteInput();
+  document.getElementById('pasteOverlay').classList.add('open');
+}
+
+function closePasteOverlay() {
+  document.getElementById('pasteOverlay').classList.remove('open');
+}
+
+function clearPasteOverlay() {
+  document.getElementById('pasteEnText').value  = '';
+  document.getElementById('pasteTgtText').value = '';
+  showPasteInput();
+  onPasteInput();
+}
 </script>
 
 <!-- ── WIZARD OVERLAY ── -->
@@ -3424,13 +3701,14 @@ if ('serviceWorker' in navigator) {
       .catch(function(err) { console.log('SW failed:', err); });
   });
 }
+
 </script>
 
 <!-- HELP MODAL -->
 <div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
   <div class="modal">
     <div class="modal-title">Quick Reference</div>
-    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.2</span></div>
+    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.6</span></div>
 
     <div class="help-section">
       <div class="help-section-title">Tabs</div>
@@ -3468,5 +3746,76 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
+
+<!-- PASTE TEXT OVERLAY -->
+<div id="pasteOverlay">
+
+  <!-- Header -->
+  <div class="paste-header">
+    <button class="btn btn-ghost btn-sm" onclick="closePasteOverlay()" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">← Back</button>
+    <div class="paste-header-title">Paste Text</div>
+    <button class="btn btn-ghost btn-sm" onclick="clearPasteOverlay()" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Clear</button>
+  </div>
+
+  <!-- Input panes (shown when not previewing) -->
+  <div class="paste-body" id="pasteInputBody">
+    <!-- Source pane -->
+    <div class="paste-pane">
+      <div class="paste-pane-hdr">
+        <span class="paste-pane-label" id="pasteEnLabel">English (Source)</span>
+        <span class="paste-pane-count" id="pasteEnCount">0 paragraphs</span>
+      </div>
+      <textarea class="paste-textarea" id="pasteEnText"
+        placeholder="Paste your source language text here…&#10;&#10;Each blank line between paragraphs will become a separate alignment block."
+        oninput="onPasteInput()"></textarea>
+    </div>
+    <!-- Target pane -->
+    <div class="paste-pane">
+      <div class="paste-pane-hdr">
+        <span class="paste-pane-label" id="pasteTgtLabel">Target Language</span>
+        <span class="paste-pane-count" id="pasteTgtCount">0 paragraphs</span>
+      </div>
+      <textarea class="paste-textarea" id="pasteTgtText"
+        placeholder="Paste your target language text here…&#10;&#10;Make sure the paragraph count matches the source side."
+        oninput="onPasteInput()"></textarea>
+    </div>
+  </div>
+
+  <!-- Preview panes (shown after Preview Split) -->
+  <div class="paste-preview" id="pastePreviewBody">
+    <div class="paste-mismatch-warn" id="pasteMismatchWarn"></div>
+    <!-- Column headers -->
+    <div style="display:flex;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface2)">
+      <div class="paste-preview-col-hdr" id="pastePreviewEnHdr" style="flex:1;padding:8px 14px;margin:0;border:none">Source</div>
+      <div class="paste-preview-col-hdr" id="pastePreviewTgtHdr" style="flex:1;padding:8px 14px;margin:0;border:none;border-left:1px solid var(--border)">Target</div>
+    </div>
+    <!-- Paired rows — each row has EN + TGT side by side at same height -->
+    <div id="pastePreviewPairs" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="paste-footer">
+    <span style="font-size:11px;color:var(--text3)" id="pasteFooterStatus">Paste text on both sides, then preview the split.</span>
+    <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" id="pasteBackBtn" onclick="showPasteInput()" style="display:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation">← Edit</button>
+      <button class="btn btn-ghost btn-sm" id="pastePreviewBtn" onclick="previewPasteSplit()" disabled style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Preview Split</button>
+      <button class="btn btn-primary btn-sm" id="pasteSendBtn" onclick="sendPasteToStudio()" disabled style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Send to Studio →</button>
+    </div>
+  </div>
+
+</div>
+
 </body>
-</html>
+</html#pasteOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 400;
+  flex-direction: column;
+  overflow: hidden;
+}
+#pasteOverlay.open {
+  display: flex;
+}
+>
