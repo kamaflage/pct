@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.25</title>
+<title>Parallel Corpus Translator v2.26</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -412,6 +412,10 @@ html{height:100dvh;height:-webkit-fill-available;}
 @media(min-height:700px){
   .modal-overlay{align-items:center;}
 }
+@media(max-height:500px){
+  .modal{max-height:85vh;max-height:85dvh;}
+  .modal-overlay{padding-top:8px;padding-bottom:8px;}
+}
 .modal-overlay.hidden{display:none}
 .modal{
   background:var(--surface);border:1px solid var(--border2);
@@ -804,7 +808,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.25</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.26</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -1312,7 +1316,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.25';
+var APP_VERSION = 'v2.26';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1353,10 +1357,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.25</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.26</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.25';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.26';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1453,7 +1457,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.25';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.26';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -3998,12 +4002,19 @@ function renderDictLibrary(dicts) {
     html += '</div>';
     html += '<div class="dict-action">';
     if (imported) {
-      html += '<span style="font-size:10px;color:var(--accent);font-family:var(--mono)">✓ imported</span>';
+      var srcCount = APP.phrases.filter(function(p){ return p.source === d.source; }).length;
+      html += '<span style="font-size:10px;color:var(--accent);font-family:var(--mono);margin-bottom:4px">✓ ' + srcCount.toLocaleString() + ' imported</span>';
+      html += '<button class="btn btn-primary btn-sm" id="dictBtn' + i + '" ' +
+        'onclick="importDictFromLibrary(' + i + ')" ' +
+        'style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Re-import</button>';
+      html += '<button class="btn btn-ghost btn-sm" ' +
+        'onclick="removeDictSource(\'' + d.source + '\')" ' +
+        'style="color:var(--red);border-color:var(--red);margin-top:4px;-webkit-tap-highlight-color:transparent;touch-action:manipulation">Remove</button>';
+    } else {
+      html += '<button class="btn btn-primary btn-sm" id="dictBtn' + i + '" ' +
+        'onclick="importDictFromLibrary(' + i + ')" ' +
+        'style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Import</button>';
     }
-    html += '<button class="btn btn-primary btn-sm" id="dictBtn' + i + '" ' +
-      'onclick="importDictFromLibrary(' + i + ')" ' +
-      'style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">' +
-      (imported ? 'Re-import' : 'Import') + '</button>';
     html += '</div>';
     html += '</div>';
   });
@@ -4039,6 +4050,20 @@ function importDictFromLibrary(idx) {
     });
 }
 
+
+function removeDictSource(source) {
+  var count = APP.phrases.filter(function(p){ return p.source === source; }).length;
+  if (!count) { toast('No phrases found with source: ' + source, 'inf'); return; }
+  APP.phrases = APP.phrases.filter(function(p){ return p.source !== source; });
+  saveApp();
+  renderPhrases();
+  updateBadges();
+  renderSourceChips();
+  // Refresh dict library view
+  if (_dictIndex) renderDictLibrary(_dictIndex);
+  toast('Removed ' + count.toLocaleString() + ' phrases from ' + source, 'ok');
+}
+
 </script>
 
 <!-- HELP MODAL -->
@@ -4049,7 +4074,7 @@ function importDictFromLibrary(idx) {
     <div style="padding:16px 18px 0;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
-        <div class="help-ver" style="margin:0"><span id="helpVer">v2.25</span></div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">v2.26</span></div>
       </div>
       <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
         <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
