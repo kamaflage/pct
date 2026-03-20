@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.16</title>
+<title>Parallel Corpus Translator v2.24</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -768,6 +768,18 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
   margin-left: 3px;
   vertical-align: middle;
 }
+
+/* ── HELP MODAL NAV ── */
+.help-nav-btn {
+  background:none;border:none;padding:8px 14px 10px;
+  font-family:var(--sans);font-size:12px;font-weight:500;
+  color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all 0.15s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.help-nav-btn:hover { color:var(--text2); }
+.help-nav-btn.active { color:var(--accent);border-bottom-color:var(--accent); }
+
 </style>
 <!-- PDF.js for in-browser PDF parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -777,7 +789,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.16</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.24</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -977,6 +989,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         <button class="filter-chip" onclick="setPhraseFilter('religious',this)">⛪ Religious</button>
         <button class="filter-chip" onclick="setPhraseFilter('grammar',this)">📐 Grammar</button>
         <button class="filter-chip" onclick="setPhraseFilter('common',this)">💬 Common</button>
+        <div id="sourceChips" style="display:contents"></div>
         <button class="filter-chip" id="suggToggleBtn" onclick="toggleSuggestions(this)" style="margin-left:auto">🔍 Suggestions</button>
       </div>
 
@@ -1283,7 +1296,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.16';
+var APP_VERSION = 'v2.24';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1324,10 +1337,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.16</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.24</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.16';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.24';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1424,7 +1437,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.16';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.24';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -1496,6 +1509,7 @@ function saveSettings() {
 }
 
 function exportProfile() {
+  saveAppNow();
   var profile = APP.profile || {};
   var data = { profile: profile, phrases: APP.phrases };
   var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -1566,7 +1580,20 @@ function init() {
 }
 
 // ── PERSISTENCE ───────────────────────────────────────────────────────────────
-function saveApp() { try { localStorage.setItem(LS_KEY, JSON.stringify(APP)); } catch(e) {} }
+var _saveTimer = null;
+function saveApp() {
+  // Debounce — wait 500ms after last call before writing to localStorage
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(APP)); } catch(e) {}
+    _saveTimer = null;
+  }, 500);
+}
+function saveAppNow() {
+  // Immediate save — use for critical operations like export
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  try { localStorage.setItem(LS_KEY, JSON.stringify(APP)); } catch(e) {}
+}
 function loadApp() { try { var s=localStorage.getItem(LS_KEY); if(s) APP=JSON.parse(s); } catch(e) {} if (!APP.suggestions) APP.suggestions=[]; }
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
@@ -2095,7 +2122,7 @@ function parseCorpusTxt(text) {
   var phrases = [];
   var skippedPhrases = 0;
   var inPhrases = false;
-  var pEn = null, pPdt = null, pCat = 'common', pConf = 'verified';
+  var pEn = null, pPdt = null, pCat = 'common', pConf = 'verified', pSrc = 'manual';
   lines.forEach(function(line) {
     line = line.trim();
     if (line === '## PHRASE LIBRARY') { inPhrases = true; return; }
@@ -2105,15 +2132,17 @@ function parseCorpusTxt(text) {
     if (/^CATEGORY:/i.test(line)) {
       var cm = line.match(/CATEGORY:\s*(\S+)/i);
       var co = line.match(/CONFIDENCE:\s*(\S+)/i);
+      var cs = line.match(/SOURCE:\s*(\S+)/i);
       if (cm) pCat  = cm[1].replace(/\s*\|.*/,'').trim();
       if (co) pConf = co[1].trim();
+      if (cs) pSrc  = cs[1].trim();
       return;
     }
     if (line === '---' && pEn && pPdt) {
       var exists = APP.phrases.some(function(p){ return p.en===pEn; });
-      if (!exists) phrases.push({id:uid(),en:pEn,pdt:pPdt,category:pCat,confidence:pConf,added:today()});
+      if (!exists) phrases.push({id:uid(),en:pEn,pdt:pPdt,category:pCat,confidence:pConf,source:pSrc,added:today()});
       else skippedPhrases++;
-      pEn=null; pPdt=null; pCat='common'; pConf='verified';
+      pEn=null; pPdt=null; pCat='common'; pConf='verified'; pSrc='manual';
     }
   });
   if (phrases.length) APP.phrases = APP.phrases.concat(phrases);
@@ -2370,28 +2399,62 @@ function renderStats() {
 }
 
 // ── RENDER PHRASES ────────────────────────────────────────────────────────────
+var _phrasePageSize  = 50;
+var _phraseOffset    = 0;
+var _filteredPhrases = [];
+
 function renderPhrases() {
   renderSuggestions();
-  var grid = document.getElementById('phraseGrid');
-  var phrases = APP.phrases.filter(function(p) {
-    var mf = _phraseFilter==='all'||p.confidence===_phraseFilter||p.category===_phraseFilter;
+  renderSourceChips();
+  _phraseOffset    = 0;
+  _filteredPhrases = APP.phrases.filter(function(p) {
+    var mf = _phraseFilter==='all'||p.confidence===_phraseFilter||p.category===_phraseFilter||p.source===_phraseFilter;
     var ms = !_phraseSearch||p.en.toLowerCase().includes(_phraseSearch)||p.pdt.toLowerCase().includes(_phraseSearch);
     return mf && ms;
   });
-  if (!phrases.length) { grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📖</div><div class="empty-msg">No phrases match.</div></div>'; return; }
-  grid.innerHTML = phrases.map(function(p) {
+  var grid = document.getElementById('phraseGrid');
+  if (!_filteredPhrases.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📖</div><div class="empty-msg">No phrases match.</div></div>';
+    return;
+  }
+  renderPhrasePage(grid, true);
+}
+
+function renderPhrasePage(grid, reset) {
+  var page = _filteredPhrases.slice(_phraseOffset, _phraseOffset + _phrasePageSize);
+  _phraseOffset += page.length;
+  var remaining = _filteredPhrases.length - _phraseOffset;
+  var html = page.map(function(p) {
     var cc = p.confidence==='verified'?'conf-verified':p.confidence==='auto'?'conf-auto':'conf-suggested';
     var cl = p.confidence==='verified'?'✅':p.confidence==='auto'?'🔵':'🟡';
+    var srcBadge = (p.source==='herman-rempel') ? '<span style="font-family:var(--mono);font-size:8px;color:var(--text3);background:var(--surface2);border-radius:3px;padding:1px 4px;margin-left:2px">HR</span>' : '';
     return '<div class="phrase-card">' +
-      '<span class="phrase-en">' + esc(p.en) + '</span>' +
+      '<span class="phrase-en">' + esc(p.en) + srcBadge + '</span>' +
       '<span class="phrase-arrow">→</span>' +
       '<span class="phrase-pdt">' + esc(p.pdt) + '</span>' +
       '<span class="phrase-conf ' + cc + '">' + cl + '</span>' +
-      '<button style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:11px;margin-right:2px" onclick="editPhrase(\''+p.id+'\')">✏️</button>' +
-      '<button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px" onclick="deletePhrase(\''+p.id+'\')">✕</button>' +
+      '<button style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:11px;margin-right:2px;-webkit-tap-highlight-color:transparent" onclick="editPhrase(\'' + p.id + '\')">✏️</button>' +
+      '<button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;-webkit-tap-highlight-color:transparent" onclick="deletePhrase(\'' + p.id + '\')">✕</button>' +
     '</div>';
   }).join('');
+  var footer = remaining > 0
+    ? '<div data-phrase-footer="1" style="grid-column:1/-1;text-align:center;padding:12px 0"><button class="btn btn-ghost btn-sm" onclick="loadMorePhrases()" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Load more (' + remaining + ' remaining)</button></div>'
+    : '<div data-phrase-footer="1" style="grid-column:1/-1;text-align:center;padding:8px 0;font-size:11px;color:var(--text3)">' + _filteredPhrases.length + ' phrase' + (_filteredPhrases.length!==1?'s':'') + ' total</div>';
+  if (reset) {
+    grid.innerHTML = html + footer;
+  } else {
+    var old = grid.querySelector('[data-phrase-footer]');
+    if (old) old.remove();
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html + footer;
+    while (tmp.firstChild) grid.appendChild(tmp.firstChild);
+  }
 }
+
+function loadMorePhrases() {
+  renderPhrasePage(document.getElementById('phraseGrid'), false);
+}
+
 
 function setPhraseFilter(f,el) {
   _phraseFilter=f;
@@ -2413,8 +2476,12 @@ function runPreprocessor() {
   var lower = text.toLowerCase();
   var sorted = APP.phrases.slice().sort(function(a,b){return b.en.length-a.en.length;});
   sorted.forEach(function(phrase) {
-    if (lower.includes(phrase.en.toLowerCase())) {
-      var already = _preMatches.some(function(m){return m.en.toLowerCase()===phrase.en.toLowerCase();});
+    var pLower = phrase.en.toLowerCase();
+    // Word-boundary match — phrase must appear as whole word(s), not inside another word
+    var escaped = pLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var pattern = new RegExp('(?<![a-z])' + escaped + '(?![a-z])', 'i');
+    if (pattern.test(lower)) {
+      var already = _preMatches.some(function(m){return m.en.toLowerCase()===pLower;});
       if (!already) { _preMatches.push(phrase); phrase.usage_count=(phrase.usage_count||0)+1; }
     }
   });
@@ -2738,6 +2805,7 @@ function saveNewPhrase() {
 
 // ── EXPORT ALL ────────────────────────────────────────────────────────────────
 function exportAll() {
+  saveAppNow();
   var lines=['PDT CORPUS EXPORT','Exported: '+today(),'Pairs: '+APP.corpus.length,'Phrases: '+APP.phrases.length,''];
   lines.push('## CORPUS PAIRS','');
   APP.corpus.forEach(function(p){
@@ -2747,7 +2815,8 @@ function exportAll() {
   lines.push('## PHRASE LIBRARY','');
   APP.phrases.forEach(function(p){
     lines.push('TERM: '+p.en); lines.push('PLAUTDIETSCH: '+p.pdt);
-    lines.push('CATEGORY: '+p.category+' | CONFIDENCE: '+p.confidence);
+    var srcTag = (p.source && p.source !== 'manual') ? ' | SOURCE: '+p.source : '';
+    lines.push('CATEGORY: '+p.category+' | CONFIDENCE: '+p.confidence+srcTag);
     lines.push('---'); lines.push('');
   });
   downloadText(lines.join('\n'),'pdt_export_'+today()+'.txt');
@@ -2756,6 +2825,7 @@ function exportAll() {
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function updateBadges() {
+  renderSourceChips();
   document.getElementById('badge-builder').textContent=_builderPairs.filter(function(p){return p.keep;}).length;
   document.getElementById('badge-corpus').textContent=APP.corpus.length;
   var _sp=(APP.suggestions||[]).filter(function(s){return s.status==='pending';}).length;
@@ -3829,48 +3899,211 @@ function toggleSuggestions(btn) {
   }
 }
 
+
+// ── DYNAMIC SOURCE CHIPS ─────────────────────────────────────────────────────
+function renderSourceChips() {
+  var container = document.getElementById('sourceChips');
+  if (!container) return;
+  var sources = {};
+  APP.phrases.forEach(function(p) {
+    if (p.source && p.source !== 'manual') {
+      sources[p.source] = (sources[p.source] || 0) + 1;
+    }
+  });
+  var html = '';
+  Object.keys(sources).sort().forEach(function(src) {
+    var label = src.split('-').map(function(w){ return w.charAt(0).toUpperCase()+w.slice(1); }).join(' ');
+    var active = (_phraseFilter === src) ? ' active' : '';
+    html += '<button class="filter-chip source-chip' + active + '" ' +
+      'onclick="setPhraseFilter(\'' + src + '\',this)" ' +
+      'data-source="' + src + '" ' +
+      'style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">' +
+      '📚 ' + label + ' (' + sources[src] + ')' +
+      '</button>';
+  });
+  container.innerHTML = html;
+}
+
+
+// ── HELP MODAL NAV ───────────────────────────────────────────────────────────
+function helpNav(tab, btn) {
+  ['ref','walk','dict'].forEach(function(t) {
+    var panel = document.getElementById('hp-' + t);
+    var navBtn = document.getElementById('hn-' + t);
+    if (panel) panel.style.display = t === tab ? '' : 'none';
+    if (navBtn) navBtn.classList.toggle('active', t === tab);
+  });
+}
+
 </script>
 
 <!-- HELP MODAL -->
-<div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
-  <div class="modal">
-    <div class="modal-title">Quick Reference</div>
-    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.16</span></div>
+<div class="modal-overlay hidden" <div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
+  <div class="modal" style="max-width:520px;padding:0;overflow:hidden;display:flex;flex-direction:column">
 
-    <div class="help-section">
-      <div class="help-section-title">Tabs</div>
-      <div class="help-row"><span class="help-tab">Builder</span><span class="help-desc">Load HTML or EPUB article pairs, align paragraphs, push to Corpus.</span></div>
-      <div class="help-row"><span class="help-tab">Corpus</span><span class="help-desc">Your verified parallel sentence pairs. Search, edit, or delete.</span></div>
-      <div class="help-row"><span class="help-tab">Phrases</span><span class="help-desc">Terminology library auto-extracted from your corpus. Pre-processes every translation.</span></div>
-      <div class="help-row"><span class="help-tab">Matcher</span><span class="help-desc">Visually link words between a sentence pair to extract new phrase mappings.</span></div>
-      <div class="help-row"><span class="help-tab">Translator</span><span class="help-desc">Paste source text → Build Prompt → copy into any LLM → paste response back → approve segments.</span></div>
-      <div class="help-row"><span class="help-tab">Queue</span><span class="help-desc">Completed translations waiting for final review.</span></div>
-    </div>
-
-    <div class="help-section">
-      <div class="help-section-title">Workflow</div>
-      <div class="help-workflow">
-        <div class="help-wf-step"><div class="help-wf-num">1</div><div>Set up your language profile via the ⚙ Settings gear — source language, target language, file naming hints.</div></div>
-        <div class="help-wf-step"><div class="help-wf-num">2</div><div>In <strong>Builder</strong>: load matching HTML pairs. Review alignment, then Push to Corpus.</div></div>
-        <div class="help-wf-step"><div class="help-wf-num">3</div><div>In <strong>Phrases</strong>: run auto-extract after building your corpus. Review and verify key terms.</div></div>
-        <div class="help-wf-step"><div class="help-wf-num">4</div><div>In <strong>Translator</strong>: paste source text → Analyze → Build Prompt → copy into your LLM.</div></div>
-        <div class="help-wf-step"><div class="help-wf-num">5</div><div>Paste the LLM response back into the app → Enter Review Mode → approve segments → Save.</div></div>
-        <div class="help-wf-step"><div class="help-wf-num">6</div><div>Use <strong>⬇ Export</strong> in the topbar to back up your full corpus and phrase library.</div></div>
+    <!-- Header with tab switcher -->
+    <div style="padding:16px 18px 0;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">v2.24</span></div>
+      </div>
+      <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
+        <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
+        <button class="help-nav-btn" id="hn-walk" onclick="helpNav('walk',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Walkthrough</button>
+        <button class="help-nav-btn" id="hn-dict" onclick="helpNav('dict',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Dictionary Import</button>
       </div>
     </div>
 
-    <div class="help-section">
-      <div class="help-section-title">Tips</div>
-      <div class="help-row"><span class="help-tab">File names</span><span class="help-desc">Name files with language codes e.g. <code>article_en.html</code> + <code>article_pdt.html</code> for auto-detection.</span></div>
-      <div class="help-row"><span class="help-tab">Alignment</span><span class="help-desc">JW publications auto-align by paragraph number. Other HTML uses positional alignment — review carefully.</span></div>
-      <div class="help-row"><span class="help-tab">Backup</span><span class="help-desc">Export regularly — all data is in your browser. Clearing browser data will erase it.</span></div>
-      <div class="help-row"><span class="help-tab">Models</span><span class="help-desc">Switch AI models from the pill in the topbar. Claude works best for structured prompts.</span></div>
-    </div>
+    <!-- Scrollable body -->
+    <div style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:16px 18px 8px">
 
-    <div class="modal-actions">
+      <!-- ── REFERENCE TAB ── -->
+      <div id="hp-ref">
+
+        <div class="help-section">
+          <div class="help-section-title">Tabs</div>
+          <div class="help-row"><span class="help-tab">Builder</span><span class="help-desc">Load article pairs 3 ways: <strong>Files/EPUB</strong> (drag or pick files), <strong>Folder Scan</strong> (batch process a folder), or <strong>Paste Text</strong> (copy-paste directly). All routes go through Alignment Studio before hitting the corpus.</span></div>
+          <div class="help-row"><span class="help-tab">Corpus</span><span class="help-desc">Your verified parallel sentence pairs. Tap the stat cards at the top to filter — Pairs shows all, Articles filters by source, Phrases jumps to the phrase library, Verified filters to confirmed phrases.</span></div>
+          <div class="help-row"><span class="help-tab">Phrases</span><span class="help-desc">Terminology library used to pre-process every translation prompt. Filter by category or source. Tap <strong>🔍 Suggestions</strong> to review auto-extracted candidates — hidden by default to keep the view clean.</span></div>
+          <div class="help-row"><span class="help-tab">Matcher</span><span class="help-desc">Open any corpus pair and visually link words between the two languages to extract new phrase mappings.</span></div>
+          <div class="help-row"><span class="help-tab">Translate</span><span class="help-desc">Paste source text → Analyze → Build Prompt → copy into any LLM → paste response back → Enter Review Mode → approve segments → Save to Queue.</span></div>
+          <div class="help-row"><span class="help-tab">Queue</span><span class="help-desc">Completed translation sessions. Review, export as text, or delete. Use <strong>Clear Approved</strong> to bulk-remove finished work.</span></div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">Topbar</div>
+          <div class="help-row"><span class="help-tab">Model pill</span><span class="help-desc">Tap the green dot + model name to switch between Claude, ChatGPT, and Gemini. Affects the prompt wording generated in the Translate tab.</span></div>
+          <div class="help-row"><span class="help-tab">☀️ / 🌙</span><span class="help-desc">Toggle light and dark mode.</span></div>
+          <div class="help-row"><span class="help-tab">⬇ Export</span><span class="help-desc">Downloads your full corpus + phrase library as a <code>.txt</code> file. Export before clearing browser data or switching devices.</span></div>
+          <div class="help-row"><span class="help-tab">⚙</span><span class="help-desc">Language settings — set source and target language names, file naming hints for auto-detection, and right-to-left toggle.</span></div>
+          <div class="help-row"><span class="help-tab">?</span><span class="help-desc">This help panel.</span></div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">Tips</div>
+          <div class="help-row"><span class="help-tab">File naming</span><span class="help-desc">Name bilingual HTML files with consistent suffixes matching your Settings hints — e.g. <code>article_en.html</code> + <code>article_tgt.html</code>. The app uses these to auto-detect which file is source and which is target.</span></div>
+          <div class="help-row"><span class="help-tab">Alignment</span><span class="help-desc">JW.org publications auto-align by paragraph number (<code>data-pid</code>). Other HTML falls back to positional alignment — always review in the studio before pushing.</span></div>
+          <div class="help-row"><span class="help-tab">Backup</span><span class="help-desc">All data is stored in your browser's localStorage. Clearing browser data wipes everything. Export regularly and keep the file somewhere safe.</span></div>
+          <div class="help-row"><span class="help-tab">Import safety</span><span class="help-desc">Importing the same file twice is safe — duplicates are detected and skipped. The app reports how many pairs and phrases were added vs skipped.</span></div>
+        </div>
+
+      </div>
+
+      <!-- ── WALKTHROUGH TAB ── -->
+      <div id="hp-walk" style="display:none">
+
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+          New here? Follow these steps to go from zero to your first translation.
+        </div>
+
+        <div class="help-workflow">
+          <div class="help-wf-step">
+            <div class="help-wf-num">1</div>
+            <div><strong>Set up your languages</strong><br>
+            Tap ⚙ in the topbar. Enter your target language name (e.g. <em>Plautdietsch</em>), an ISO code if you know it, and the file suffix your bilingual files use (e.g. <em>_pdt</em>). Save.</div>
+          </div>
+          <div class="help-wf-step">
+            <div class="help-wf-num">2</div>
+            <div><strong>Add content to your corpus</strong><br>
+            Go to <strong>Builder</strong>. Choose a method:<br>
+            • <em>Files</em> — pick one English + one target HTML file<br>
+            • <em>Folder</em> — pick a folder of paired HTML files<br>
+            • <em>Paste Text</em> — paste an article directly in both languages<br>
+            The app opens Alignment Studio — review the paragraph pairs, remove mismatches, then Accept &amp; Push.</div>
+          </div>
+          <div class="help-wf-step">
+            <div class="help-wf-num">3</div>
+            <div><strong>Build your phrase library</strong><br>
+            Go to <strong>Phrases</strong>. Tap <strong>🔍 Suggestions</strong> to see auto-extracted word pairs from your corpus. Review them — tap Add ✅ to keep or Skip ✕ to discard. Use <em>Add ≥80%</em> to approve all high-confidence suggestions at once.</div>
+          </div>
+          <div class="help-wf-step">
+            <div class="help-wf-num">4</div>
+            <div><strong>Import a dictionary (optional)</strong><br>
+            If you have a bilingual dictionary, ask an AI to convert it to the PCT import format (see the Dictionary Import tab). Import the resulting <code>.txt</code> file via <strong>Corpus → Load .txt</strong>. It will appear as a filter chip in the Phrases tab.</div>
+          </div>
+          <div class="help-wf-step">
+            <div class="help-wf-num">5</div>
+            <div><strong>Translate something</strong><br>
+            Go to <strong>Translate</strong>. Paste your English source text, tap <em>Analyze</em> then <em>Build Prompt</em>. Copy the prompt into Claude, ChatGPT, or any LLM. Paste the response back, tap <em>Enter Review Mode</em>, approve each segment, and Save.</div>
+          </div>
+          <div class="help-wf-step">
+            <div class="help-wf-num">6</div>
+            <div><strong>Back up your work</strong><br>
+            Tap <strong>⬇ Export</strong> in the topbar. Save the downloaded <code>.txt</code> file. This file contains everything — corpus pairs, phrase library, all source tags. You can import it on any device to restore your full workspace.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── DICTIONARY IMPORT TAB ── -->
+      <div id="hp-dict" style="display:none">
+
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+          Any bilingual dictionary or word list can be imported as a tagged phrase source. Once imported, it appears as its own filter chip in the Phrases tab.
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">Import File Format</div>
+          <div class="help-row">
+            <span class="help-tab">Header</span>
+            <span class="help-desc">File must begin with:<br>
+            <code>PDT CORPUS EXPORT</code><br>
+            <code>Exported: YYYY-MM-DD</code><br>
+            <code>Pairs: 0</code><br>
+            <code>Phrases: [count]</code><br>
+            <code></code><br>
+            <code>## CORPUS PAIRS</code><br>
+            <code></code><br>
+            <code>## PHRASE LIBRARY</code>
+            </span>
+          </div>
+          <div class="help-row">
+            <span class="help-tab">Each entry</span>
+            <span class="help-desc">
+            <code>TERM: English word or phrase</code><br>
+            <code>PLAUTDIETSCH: Target translation</code><br>
+            <code>CATEGORY: common | CONFIDENCE: verified | SOURCE: source-name</code><br>
+            <code>---</code><br><br>
+            Note: the field is literally <code>PLAUTDIETSCH:</code> regardless of language — this is a fixed parser keyword.
+            </span>
+          </div>
+          <div class="help-row">
+            <span class="help-tab">SOURCE key</span>
+            <span class="help-desc">Use lowercase with hyphens — e.g. <code>herman-rempel</code>, <code>jw-glossary</code>, <code>smith-dict</code>. All entries from the same dictionary must share the same SOURCE value. This becomes the filter chip label (auto-capitalized).</span>
+          </div>
+          <div class="help-row">
+            <span class="help-tab">CATEGORY</span>
+            <span class="help-desc">Valid values: <code>common</code>, <code>religious</code>, <code>grammar</code>, <code>proper</code>. Use <code>religious</code> for Bible terms, congregation vocabulary, and proper names.</span>
+          </div>
+          <div class="help-row">
+            <span class="help-tab">CONFIDENCE</span>
+            <span class="help-desc"><code>verified</code> — confirmed correct. <code>suggested</code> — needs review. Dictionary imports should use <code>verified</code>.</span>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">Asking an AI to Build a Dictionary File</div>
+          <div class="help-row">
+            <span class="help-tab">Prompt</span>
+            <span class="help-desc">Give the AI the dictionary content (paste it, upload it, or share the URL) and say:<br><br>
+            <em>"Convert this dictionary to PCT Translator import format. Use SOURCE: [your-source-name]. Output a plain text file starting with the required header. Each entry must use TERM:, PLAUTDIETSCH:, CATEGORY:, CONFIDENCE:, SOURCE:, and --- separator."</em><br><br>
+            Include this help tab's Entry format as a reference so the AI knows the exact structure.</span>
+          </div>
+          <div class="help-row">
+            <span class="help-tab">After import</span>
+            <span class="help-desc">Go to <strong>Phrases</strong> — your new source chip will appear automatically in the filter bar. Tap it to view only entries from that dictionary.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /scrollable body -->
+
+    <div class="modal-actions" style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0">
       <button class="btn btn-primary" onclick="closeModal('helpModal')" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Got it</button>
     </div>
   </div>
+</div>
 </div>
 
 
