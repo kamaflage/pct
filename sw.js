@@ -26,7 +26,7 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  // Network first for CDN resources (JSZip, sql.js, fonts)
+  // CDN resources — network first, fall back to cache
   if (e.request.url.includes('cdnjs') || e.request.url.includes('googleapis')) {
     e.respondWith(
       fetch(e.request).catch(function() {
@@ -35,7 +35,25 @@ self.addEventListener('fetch', function(e) {
     );
     return;
   }
-  // Cache first for app shell
+
+  // App shell (index.html, sw.js) — network first so updates are picked up immediately
+  // Fall back to cache only when offline
+  if (e.request.mode === 'navigate' || ASSETS.some(function(a) { return e.request.url.endsWith(a.replace('./','')); })) {
+    e.respondWith(
+      fetch(e.request).then(function(response) {
+        if (response && response.status === 200) {
+          var clone = response.clone();
+          caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
+        }
+        return response;
+      }).catch(function() {
+        return caches.match(e.request);
+      })
+    );
+    return;
+  }
+
+  // Everything else — cache first
   e.respondWith(
     caches.match(e.request).then(function(cached) {
       return cached || fetch(e.request).then(function(response) {
