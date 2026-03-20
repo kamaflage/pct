@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.24</title>
+<title>Parallel Corpus Translator v2.25</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -780,6 +780,21 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 .help-nav-btn:hover { color:var(--text2); }
 .help-nav-btn.active { color:var(--accent);border-bottom-color:var(--accent); }
 
+
+/* ── DICTIONARY LIBRARY ── */
+.dict-card {
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);
+  padding:14px 16px;margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:14px;
+}
+.dict-icon { font-size:28px;flex-shrink:0;margin-top:2px; }
+.dict-info { flex:1;min-width:0; }
+.dict-name { font-weight:600;font-size:13px;color:var(--text);margin-bottom:3px; }
+.dict-desc { font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:6px; }
+.dict-meta { font-family:var(--mono);font-size:10px;color:var(--text3); }
+.dict-action { flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px; }
+.dict-loading { font-size:11px;color:var(--accent);font-family:var(--mono); }
+
 </style>
 <!-- PDF.js for in-browser PDF parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -789,7 +804,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.24</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.25</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -942,6 +957,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         </div>
         <div class="btn-row">
           <button class="btn btn-ghost btn-sm" onclick="openModal('addPairModal')">+ Add Pair</button>
+          <button class="btn btn-ghost btn-sm" onclick="openDictLibrary()" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">📚 Dictionaries</button>
           <label class="btn btn-primary btn-sm" style="cursor:pointer">⬆ Load .txt<input type="file" id="corpusFileInput" accept=".txt,.json" style="position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none" onchange="loadCorpusFile(event)"></label>
         </div>
       </div>
@@ -1296,7 +1312,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.24';
+var APP_VERSION = 'v2.25';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1337,10 +1353,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.24</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.25</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.24';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.25';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1437,7 +1453,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.24';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.25';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -3935,6 +3951,94 @@ function helpNav(tab, btn) {
   });
 }
 
+
+// ── DICTIONARY LIBRARY ───────────────────────────────────────────────────────
+var DICT_BASE_URL = 'https://kamaflage.github.io/pct/';
+var _dictIndex = null;
+
+function openDictLibrary() {
+  openModal('dictLibraryModal');
+  if (_dictIndex) { renderDictLibrary(_dictIndex); return; }
+  fetch(DICT_BASE_URL + 'dictionaries/index.json')
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      _dictIndex = data;
+      renderDictLibrary(data);
+    })
+    .catch(function(err) {
+      document.getElementById('dictLibraryList').innerHTML =
+        '<div style="text-align:center;padding:20px;color:var(--red);font-size:12px">' +
+        '⚠ Could not load dictionary index.<br>' +
+        '<span style="color:var(--text3);font-size:11px">' + err.message + '</span></div>';
+    });
+}
+
+function renderDictLibrary(dicts) {
+  if (!dicts || !dicts.length) {
+    document.getElementById('dictLibraryList').innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">No dictionaries available.</div>';
+    return;
+  }
+  var html = '';
+  dicts.forEach(function(d, i) {
+    // Check if already imported by looking for phrases with this source
+    var imported = APP.phrases.some(function(p){ return p.source === d.source; });
+    html += '<div class="dict-card">';
+    html += '<div class="dict-icon">📖</div>';
+    html += '<div class="dict-info">';
+    html += '<div class="dict-name">' + esc(d.name) + '</div>';
+    html += '<div class="dict-desc">' + esc(d.description) + '</div>';
+    html += '<div class="dict-meta">' + d.entries.toLocaleString() + ' entries';
+    if (d.language) html += ' · ' + esc(d.language);
+    if (d.author) html += ' · ' + esc(d.author);
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="dict-action">';
+    if (imported) {
+      html += '<span style="font-size:10px;color:var(--accent);font-family:var(--mono)">✓ imported</span>';
+    }
+    html += '<button class="btn btn-primary btn-sm" id="dictBtn' + i + '" ' +
+      'onclick="importDictFromLibrary(' + i + ')" ' +
+      'style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">' +
+      (imported ? 'Re-import' : 'Import') + '</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  document.getElementById('dictLibraryList').innerHTML = html;
+}
+
+function importDictFromLibrary(idx) {
+  var d = _dictIndex[idx];
+  if (!d) return;
+  var btn = document.getElementById('dictBtn' + idx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Fetching…'; }
+
+  fetch(DICT_BASE_URL + d.file)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(function(text) {
+      // Parse and import using existing corpus file parser
+      var before = APP.phrases.length;
+      parseCorpusTxt(text);
+      // parseCorpusTxt shows its own toast — update button
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Re-import';
+      }
+      // Refresh the library view to show imported badge
+      renderDictLibrary(_dictIndex);
+    })
+    .catch(function(err) {
+      toast('Failed to fetch dictionary: ' + err.message, 'err');
+      if (btn) { btn.disabled = false; btn.textContent = 'Import'; }
+    });
+}
+
 </script>
 
 <!-- HELP MODAL -->
@@ -3945,7 +4049,7 @@ function helpNav(tab, btn) {
     <div style="padding:16px 18px 0;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
-        <div class="help-ver" style="margin:0"><span id="helpVer">v2.24</span></div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">v2.25</span></div>
       </div>
       <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
         <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
@@ -4163,6 +4267,25 @@ function helpNav(tab, btn) {
     </div>
   </div>
 
+</div>
+
+
+<!-- DICTIONARY LIBRARY MODAL -->
+<div class="modal-overlay hidden" id="dictLibraryModal" onclick="if(event.target===this)closeModal('dictLibraryModal')">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">📚 Dictionary Library</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+      Import a dictionary directly from the online library. Duplicates are skipped automatically.
+    </p>
+    <div id="dictLibraryList">
+      <div style="text-align:center;padding:24px;font-family:var(--mono);font-size:11px;color:var(--text3)">
+        Loading dictionaries…
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('dictLibraryModal')" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Close</button>
+    </div>
+  </div>
 </div>
 
 </body>
