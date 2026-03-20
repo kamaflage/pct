@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Herman Rempel Dictionary",
+    "source": "herman-rempel",
+    "file": "dictionaries/herman-rempel.txt",
+    "description": "English to Plautdietsch dictionary. ~13,700 entries covering common, religious, and specialized vocabulary.",
+    "entries": 13703,
+    "language": "Plautdietsch",
+    "author": "Herman Rempel"
+  }
+]
