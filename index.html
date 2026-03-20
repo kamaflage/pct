@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.27</title>
+<title>Parallel Corpus Translator v2.28</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -809,7 +809,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.27</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.28</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -1317,7 +1317,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.27';
+var APP_VERSION = 'v2.28';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1358,10 +1358,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.27</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.28</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.27';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.28';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1458,7 +1458,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.27';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.28';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -4064,6 +4064,7 @@ function removeDictSource(source) {
   APP.phrases = APP.phrases.filter(function(p){ return p.source !== source; });
   saveApp();
   renderPhrases();
+  renderStats();
   updateBadges();
   renderSourceChips();
   // Refresh dict library view
@@ -4081,7 +4082,7 @@ function removeDictSource(source) {
     <div style="padding:16px 18px 0;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
-        <div class="help-ver" style="margin:0"><span id="helpVer">v2.27</span></div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">v2.28</span></div>
       </div>
       <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
         <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
