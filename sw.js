@@ -1,4 +1,4 @@
-const CACHE = 'pct-v2.26';
+const CACHE = 'pct-v2.27';
 const ASSETS = [
   './',
   './index.html'

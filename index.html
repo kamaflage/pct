@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.26</title>
+<title>Parallel Corpus Translator v2.27</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -164,7 +164,12 @@ html{height:100dvh;height:-webkit-fill-available;}
   .mobile-nav{display:flex !important}
   .logo em{display:none}
   .model-pill span.model-label{display:none}
-  .panel{padding:14px;overflow-y:auto;height:100%;min-height:0;-webkit-overflow-scrolling:touch;}
+  .panel{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  padding:14px;display:none;
+}
   .phrase-grid{grid-template-columns:1fr}
   .stats-row{flex-wrap:wrap}
   .stat-card{min-width:calc(50% - 5px);flex:none;cursor:pointer;transition:border-color 0.15s,background 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
@@ -178,12 +183,8 @@ html{height:100dvh;height:-webkit-fill-available;}
 @media(min-width:769px){.mobile-nav{display:none}}
 
 /* ── CONTENT ── */
-.content{flex:1 1 auto;overflow:hidden;min-height:0;}
-.panel{
-  overflow-y:auto;padding:20px;
-  height:100%;min-height:0;display:none;
-  -webkit-overflow-scrolling:touch;
-}
+.content{flex:1 1 0px;position:relative;overflow:hidden;min-height:0;}
+/* panel scroll rules consolidated above */
 .panel.active{display:block}
 
 /* ── SECTION HEADERS ── */
@@ -808,7 +809,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.26</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.27</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -1316,7 +1317,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.26';
+var APP_VERSION = 'v2.27';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1357,10 +1358,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.26</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.27</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.26';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.27';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1457,7 +1458,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.26';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.27';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -1623,7 +1624,13 @@ function switchTab(name) {
     document.getElementById('tab-'+t) && document.getElementById('tab-'+t).classList.remove('active');
     document.getElementById('mob-'+t) && document.getElementById('mob-'+t).classList.remove('active');
   });
-  document.getElementById('panel-'+name).classList.add('active');
+  var activePanel = document.getElementById('panel-'+name);
+  activePanel.classList.add('active');
+  // Force Safari reflow to correctly compute scroll height
+  activePanel.style.webkitOverflowScrolling = 'auto';
+  activePanel.offsetHeight; // trigger reflow
+  activePanel.style.webkitOverflowScrolling = 'touch';
+  activePanel.scrollTop = 0;
   if (name==='phrases') { runCoOccurrence(); renderSuggestions(); }
   if (name==='matcher') { renderMatcher(); }
   document.getElementById('tab-'+name) && document.getElementById('tab-'+name).classList.add('active');
@@ -4074,7 +4081,7 @@ function removeDictSource(source) {
     <div style="padding:16px 18px 0;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
-        <div class="help-ver" style="margin:0"><span id="helpVer">v2.26</span></div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">v2.27</span></div>
       </div>
       <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
         <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
