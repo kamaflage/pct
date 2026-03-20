@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.12</title>
+<title>Parallel Corpus Translator v2.16</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -167,7 +167,8 @@ html{height:100dvh;height:-webkit-fill-available;}
   .panel{padding:14px;overflow-y:auto;height:100%;min-height:0;-webkit-overflow-scrolling:touch;}
   .phrase-grid{grid-template-columns:1fr}
   .stats-row{flex-wrap:wrap}
-  .stat-card{min-width:calc(50% - 5px);flex:none}
+  .stat-card{min-width:calc(50% - 5px);flex:none;cursor:pointer;transition:border-color 0.15s,background 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.stat-card:hover,.stat-card:active{border-color:var(--accent);background:var(--accent-dim);}
   .section-hdr{flex-direction:column;align-items:flex-start;gap:10px}
   .section-hdr .btn-row{width:100%;display:flex;gap:6px}
   .topbar{padding:0 12px;gap:8px}
@@ -776,7 +777,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.12</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.16</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -934,10 +935,10 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
       </div>
 
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-val" id="statPairs">0</div><div class="stat-lbl">Pairs</div></div>
-        <div class="stat-card"><div class="stat-val" id="statArticles">0</div><div class="stat-lbl">Articles</div></div>
-        <div class="stat-card"><div class="stat-val" id="statPhrases">0</div><div class="stat-lbl">Phrases</div></div>
-        <div class="stat-card"><div class="stat-val" id="statVerified">0</div><div class="stat-lbl">Verified</div></div>
+        <div class="stat-card" onclick="statClick('pairs')" title="Show all pairs"><div class="stat-val" id="statPairs">0</div><div class="stat-lbl">Pairs</div></div>
+        <div class="stat-card" onclick="statClick('articles')" title="Browse by article"><div class="stat-val" id="statArticles">0</div><div class="stat-lbl">Articles</div></div>
+        <div class="stat-card" onclick="statClick('phrases')" title="Go to Phrases tab"><div class="stat-val" id="statPhrases">0</div><div class="stat-lbl">Phrases</div></div>
+        <div class="stat-card" onclick="statClick('verified')" title="Show verified pairs only"><div class="stat-val" id="statVerified">0</div><div class="stat-lbl">Verified</div></div>
       </div>
 
       <div id="corpusUploadZone" class="corpus-upload"
@@ -976,6 +977,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
         <button class="filter-chip" onclick="setPhraseFilter('religious',this)">⛪ Religious</button>
         <button class="filter-chip" onclick="setPhraseFilter('grammar',this)">📐 Grammar</button>
         <button class="filter-chip" onclick="setPhraseFilter('common',this)">💬 Common</button>
+        <button class="filter-chip" id="suggToggleBtn" onclick="toggleSuggestions(this)" style="margin-left:auto">🔍 Suggestions</button>
       </div>
 
       <div id="suggestionsSection" style="display:none"></div>
@@ -1024,8 +1026,8 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
           <div class="trans-pane-hdr">
             <span class="trans-pane-title" id="rightPaneTitle">Translation Prompt</span>
             <div style="display:flex;gap:5px">
-              <button class="btn btn-ghost btn-sm" id="toggleReviewBtn" onclick="toggleReviewMode()" style="display:none">⬅ Back</button>
-              <button class="btn btn-primary btn-sm" id="copyPromptBtn" onclick="copyPrompt()">Copy Prompt</button>
+              <button class="btn btn-ghost btn-sm" id="toggleReviewBtn" onclick="toggleReviewMode()" style="display:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation">⬅ Back</button>
+              <button class="btn btn-primary btn-sm" id="copyPromptBtn" onclick="copyPrompt()" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Copy Prompt</button>
             </div>
           </div>
 
@@ -1281,7 +1283,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.12';
+var APP_VERSION = 'v2.16';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1322,10 +1324,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.12</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.16</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.12';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.16';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1422,7 +1424,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.12';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.16';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -2074,7 +2076,7 @@ function handleCorpusDrop(e) {
 
 function parseCorpusTxt(text) {
   var lines = text.split('\n');
-  var pairs = []; var currentArticle = 'General'; var en = null, pdt = null;
+  var pairs = []; var skippedPairs = 0; var currentArticle = 'General'; var en = null, pdt = null;
   lines.forEach(function(line) {
     line = line.trim(); if (!line) return;
     var am = line.match(/^###?\s+(?:ARTICLE:\s+)?(.+?)\s+###?$|^##\s+(.+)$/);
@@ -2084,12 +2086,14 @@ function parseCorpusTxt(text) {
     if (line === '---' && en && pdt) {
       var exists = APP.corpus.some(function(p){ return p.en===en&&p.pdt===pdt; });
       if (!exists) pairs.push({id:uid(),article:currentArticle,en:en,pdt:pdt,verified:true,added:today()});
+      else skippedPairs++;
       en=null; pdt=null;
     }
   });
   if (en && pdt) pairs.push({id:uid(),article:currentArticle,en:en,pdt:pdt,verified:true,added:today()});
   // ── Parse PHRASE LIBRARY section ──
   var phrases = [];
+  var skippedPhrases = 0;
   var inPhrases = false;
   var pEn = null, pPdt = null, pCat = 'common', pConf = 'verified';
   lines.forEach(function(line) {
@@ -2108,19 +2112,28 @@ function parseCorpusTxt(text) {
     if (line === '---' && pEn && pPdt) {
       var exists = APP.phrases.some(function(p){ return p.en===pEn; });
       if (!exists) phrases.push({id:uid(),en:pEn,pdt:pPdt,category:pCat,confidence:pConf,added:today()});
+      else skippedPhrases++;
       pEn=null; pPdt=null; pCat='common'; pConf='verified';
     }
   });
   if (phrases.length) APP.phrases = APP.phrases.concat(phrases);
 
-  if (!pairs.length && !phrases.length) { toast('No pairs or phrases found — check format', 'err'); return; }
+  if (!pairs.length && !phrases.length) {
+    if (skippedPairs > 0 || skippedPhrases > 0) {
+      toast('Already imported — ' + (skippedPairs+skippedPhrases) + ' duplicate' + (skippedPairs+skippedPhrases!==1?'s':'')+' skipped', 'inf');
+    } else {
+      toast('No pairs or phrases found — check file format', 'err');
+    }
+    return;
+  }
   if (pairs.length) APP.corpus = APP.corpus.concat(pairs);
   saveApp();
   renderCorpus(); renderStats(); var newSugg=runCoOccurrence(); renderPhrases(); updateBadges();
   var msg = '';
   if (pairs.length)   msg += pairs.length + ' pairs';
   if (phrases.length) msg += (msg?', ':'')+phrases.length+' phrase'+(phrases.length!==1?'s':'');
-  toast('Loaded ' + msg + (newSugg?' · '+newSugg+' suggestions queued':''), 'ok');
+  var skipMsg = (skippedPairs+skippedPhrases) > 0 ? ' · '+(skippedPairs+skippedPhrases)+' duplicate'+(skippedPairs+skippedPhrases!==1?'s':'')+' skipped' : '';
+  toast('Loaded ' + msg + skipMsg + (newSugg?' · '+newSugg+' suggestions queued':''), 'ok');
 }
 
 // ── PHRASE EXTRACTION ─────────────────────────────────────────────────────────
@@ -2243,9 +2256,10 @@ function renderSuggestions() {
   var sec = document.getElementById('suggestionsSection');
   if (!sec) return;
   var pending = APP.suggestions.filter(function(s){ return s.status==='pending'; });
-  if (!pending.length) { sec.style.display='none'; return; }
-  sec.style.display='';
+  if (!pending.length) { sec.style.display='none'; _suggestionsOpen=false; var tb=document.getElementById('suggToggleBtn'); if(tb)tb.classList.remove('active'); return; }
+  if (!_suggestionsOpen) { sec.style.display='none'; var tb=document.getElementById('suggToggleBtn'); if(tb){tb.classList.remove('active');var cnt=pending.length;tb.textContent='🔍 Suggestions ('+cnt+')';} return; }
   var hiCount = pending.filter(function(s){ return s.confidence>=80; }).length;
+  var tb=document.getElementById('suggToggleBtn'); if(tb) tb.textContent='🔍 Suggestions ('+pending.length+')';
   var html = '<div class="sugg-section">';
   html += '<div class="sugg-hdr">';
   html += '<div class="sugg-hdr-left"><span class="sugg-title">&#128269; Suggestions</span>';
@@ -2474,6 +2488,7 @@ function buildPrompt() {
   document.getElementById('promptBox').textContent = prompt;
   document.getElementById('copyPromptBtn').style.display = '';
   document.getElementById('toggleReviewBtn').style.display = '';
+  document.getElementById('toggleReviewBtn').textContent = 'Review Mode';
   toast('Prompt built · ' + examples.length + ' examples · ' + _preMatches.length + ' phrases locked','ok');
   // Mobile: swap to right pane
   if(window.innerWidth<=768) {
@@ -3754,13 +3769,73 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+
+// ── STAT CARD CLICKS ──────────────────────────────────────────────────────────
+function statClick(type) {
+  if (type === 'phrases') {
+    // Jump to phrases tab, show all
+    switchTab('phrases');
+    _phraseFilter = 'all';
+    document.querySelectorAll('#panel-phrases .filter-chip').forEach(function(el){ el.classList.remove('active'); });
+    var allBtn = document.querySelector('#panel-phrases .filter-chip');
+    if (allBtn) allBtn.classList.add('active');
+    renderPhrases();
+    return;
+  }
+  if (type === 'verified') {
+    // Verified = phrases with confidence verified — jump to Phrases tab filtered to verified
+    switchTab('phrases');
+    _phraseFilter = 'verified';
+    document.querySelectorAll('#panel-phrases .filter-chip').forEach(function(el){ el.classList.remove('active'); });
+    var verBtn = document.querySelector('#panel-phrases .filter-chip[onclick*="verified"]');
+    if (verBtn) verBtn.classList.add('active');
+    renderPhrases();
+    return;
+  }
+  if (type === 'pairs') {
+    // Show all pairs
+    switchTab('corpus');
+    _pairSearch = '';
+    document.getElementById('pairSearch').value = '';
+    document.querySelectorAll('#corpusFilterBar .filter-chip').forEach(function(el){ el.classList.remove('active'); });
+    var allChip = document.querySelector('#corpusFilterBar .all-chip');
+    if (allChip) allChip.classList.add('active');
+    renderPairList();
+    return;
+  }
+  if (type === 'articles') {
+    // Show corpus with filter bar visible, scroll to it
+    switchTab('corpus');
+    var fbar = document.getElementById('corpusFilterBar');
+    if (fbar) fbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast('Tap an article chip to filter', 'inf');
+    return;
+  }
+}
+
+
+// ── SUGGESTIONS TOGGLE ───────────────────────────────────────────────────────
+var _suggestionsOpen = false;
+
+function toggleSuggestions(btn) {
+  _suggestionsOpen = !_suggestionsOpen;
+  btn.classList.toggle('active', _suggestionsOpen);
+  var sec = document.getElementById('suggestionsSection');
+  if (_suggestionsOpen) {
+    renderSuggestions();
+    sec.style.display = '';
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
 </script>
 
 <!-- HELP MODAL -->
 <div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
   <div class="modal">
     <div class="modal-title">Quick Reference</div>
-    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.12</span></div>
+    <div class="help-ver">Parallel Corpus Translator &nbsp;·&nbsp; <span id="helpVer">v2.16</span></div>
 
     <div class="help-section">
       <div class="help-section-title">Tabs</div>
