@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.29</title>
+<title>Parallel Corpus Translator V2.30</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -818,7 +818,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.29</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">V2.30</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -1331,7 +1331,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.29';
+var APP_VERSION = 'V2.30';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1352,7 +1352,7 @@ var _alignIdx    = 0;   // current index in _alignQueue
 var _alignTotals = {};  // running totals across the batch
 
 // ── SEED GLOSSARY ─────────────────────────────────────────────────────────────
-// Phrase seeds: empty in v1.0 — user builds per language
+// Phrase seeds: empty in V2.30 — user builds per language
 var SEEDS = [];
 
 // ── DEFAULT PROFILE (empty — wizard sets on first launch) ─────────────────────
@@ -1374,10 +1374,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.29</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">V2.30</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.29';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' V2.30';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1474,7 +1474,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.29';
+  document.getElementById('confTitle').textContent = name + ' Translator V2.30';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -1951,56 +1951,60 @@ function buildAlignGrid(en, pdt) {
     '<div class="a-hdr-cell"></div>' +
     '</div>';
 
+  /* --- Replace the middle section of buildAlignGrid with this --- */
+  
   for (var i = 0; i < maxLen; i++) {
-    var et  = (en[i]  !== undefined) ? en[i]  : null;
-    var pt  = (pdt[i] !== undefined) ? pdt[i] : null;
-    if (et === null && pt === null) continue; // skip ghost rows — both sides empty
-    var cls = (et === null || pt === null) ? 'bad' : 'ok';
-
-    var enCell = et !== null
-      ? '<div class="a-cell ' + cls + '" draggable="true"' +
-        ' ondragstart="alignDragStart(event,\'en\',' + i + ')"' +
-        ' ondragover="alignDragOver(event,\'en\',' + i + ')"' +
-        ' ondragleave="alignDragLeave(event)"' +
-        ' ondrop="alignDrop(event,\'en\',' + i + ')"' +
-        ' ondragend="alignDragEnd()">' +
-        '<span class="a-grip">\u2807</span>' + esc(et) + '</div>'
-      : '<div class="a-cell bad empty">(empty)</div>';
-
-    var pdtCell = pt !== null
-      ? '<div class="a-cell ' + cls + ' pdt" draggable="true"' +
-        ' ondragstart="alignDragStart(event,\'pdt\',' + i + ')"' +
-        ' ondragover="alignDragOver(event,\'pdt\',' + i + ')"' +
-        ' ondragleave="alignDragLeave(event)"' +
-        ' ondrop="alignDrop(event,\'pdt\',' + i + ')"' +
-        ' ondragend="alignDragEnd()">' +
-        '<span class="a-grip">\u2807</span>' + esc(pt) + '</div>'
-      : '<div class="a-cell bad empty">(empty)</div>';
-
-    var enMove = et !== null
-      ? '<div class="a-move">' +
-          '<button onclick="moveAlignRow(\'en\',' + i + ',-1)" title="Move up"' + (i===0?' disabled':'') + '>\u2191</button>' +
-          '<button onclick="moveAlignRow(\'en\',' + i + ',1)" title="Move down"' + (i===en.length-1?' disabled':'') + '>\u2193</button>' +
-        '</div>'
-      : '<div class="a-move"></div>';
-    var pdtMove = pt !== null
-      ? '<div class="a-move">' +
-          '<button onclick="moveAlignRow(\'pdt\',' + i + ',-1)" title="Move up"' + (i===0?' disabled':'') + '>\u2191</button>' +
-          '<button onclick="moveAlignRow(\'pdt\',' + i + ',1)" title="Move down"' + (i===pdt.length-1?' disabled':'') + '>\u2193</button>' +
-        '</div>'
-      : '<div class="a-move"></div>';
-
-    rows +=
-      '<div class="a-row" id="arow-' + i + '">' +
-      '<div class="a-num">' + (i+1) + '</div>' +
-      enMove +
-      enCell +
-      '<div class="a-del">' + (et!==null ? '<button onclick="delAlignRow(\'en\',' + i + ')" title="Remove">\u2715</button>' : '') + '</div>' +
-      pdtMove +
-      pdtCell +
-      '<div class="a-del">' + (pt!==null ? '<button onclick="delAlignRow(\'pdt\',' + i + ')" title="Remove">\u2715</button>' : '') + '</div>' +
-      '</div>';
+      var et  = (en[i]  !== undefined) ? en[i]  : null;
+      var pt  = (pdt[i] !== undefined) ? pdt[i] : null;
+      if (et === null && pt === null) continue; 
+      var cls = (et === null || pt === null) ? 'bad' : 'ok';
+  
+      var enCell = et !== null
+        ? '<div class="a-cell ' + cls + '" draggable="true"' +
+          ' ondragstart="alignDragStart(event,\'en\',' + i + ')"' +
+          ' ondragover="alignDragOver(event,\'en\',' + i + ')"' +
+          ' ondragleave="alignDragLeave(event)"' +
+          ' ondrop="alignDrop(event,\'en\',' + i + ')"' +
+          ' ondragend="alignDragEnd()">' +
+          '<span class="a-grip">\u2807</span>' + esc(et) + '</div>'
+        : '<div class="a-cell bad empty">(empty)</div>';
+  
+      var pdtCell = pt !== null
+        ? '<div class="a-cell ' + cls + ' pdt" draggable="true"' +
+          ' ondragstart="alignDragStart(event,\'pdt\',' + i + ')"' +
+          ' ondragover="alignDragOver(event,\'pdt\',' + i + ')"' +
+          ' ondragleave="alignDragLeave(event)"' +
+          ' ondrop="alignDrop(event,\'pdt\',' + i + ')"' +
+          ' ondragend="alignDragEnd()">' +
+          '<span class="a-grip">\u2807</span>' + esc(pt) + '</div>'
+        : '<div class="a-cell bad empty">(empty)</div>';
+  
+      var enMove = et !== null
+        ? '<div class="a-move">' +
+            '<button onclick="moveAlignRow(\'en\',' + i + ',-1)" title="Move up"' + (i===0?' disabled':'') + '>\u2191</button>' +
+            '<button onclick="moveAlignRow(\'en\',' + i + ',1)" title="Move down"' + (i===en.length-1?' disabled':'') + '>\u2193</button>' +
+          '</div>'
+        : '<div class="a-move"></div>';
+        
+      var pdtMove = pt !== null
+        ? '<div class="a-move">' +
+            '<button onclick="moveAlignRow(\'pdt\',' + i + ',-1)" title="Move up"' + (i===0?' disabled':'') + '>\u2191</button>' +
+            '<button onclick="moveAlignRow(\'pdt\',' + i + ',1)" title="Move down"' + (i===pdt.length-1?' disabled':'') + '>\u2193</button>' +
+          '</div>'
+        : '<div class="a-move"></div>';
+  
+      rows +=
+        '<div class="a-row" id="arow-' + i + '">' +
+        '<div class="a-num">' + (i+1) + '</div>' +
+        enMove +
+        enCell +
+        '<div class="a-del"><button onclick="delAlignRow(\'en\',' + i + ')" title="Remove">\u2715</button></div>' +
+        pdtMove +
+        pdtCell +
+        '<div class="a-del"><button onclick="delAlignRow(\'pdt\',' + i + ')" title="Remove">\u2715</button></div>' +
+        '</div>';
   }
+  
   document.getElementById('alignBody').innerHTML = rows;
 }
 
@@ -3749,7 +3753,7 @@ function clearPasteOverlay() {
           </label>
         </div>
         <div style="margin-top:8px;padding:10px 14px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--text2)">
-          Source language: <strong style="color:var(--text)">English</strong> (fixed in v1.0)
+          Source language: <strong style="color:var(--text)">English</strong> (fixed in V2.30)
         </div>
       </div>
 
@@ -4121,7 +4125,7 @@ function removeDictSource(source) {
     <div style="padding:16px 18px 0;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
-        <div class="help-ver" style="margin:0"><span id="helpVer">v2.29</span></div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">V2.30</span></div>
       </div>
       <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
         <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
