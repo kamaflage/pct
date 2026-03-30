@@ -10,7 +10,7 @@
 <meta name="description" content="Build parallel translation corpora and generate AI-assisted translation prompts.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Parallel Corpus Translator v2.28</title>
+<title>Parallel Corpus Translator v2.29</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -260,6 +260,15 @@ html{height:100dvh;height:-webkit-fill-available;}
   touch-action:manipulation;
 }
 .filter-chip.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.filter-collapse-btn{
+  padding:4px 9px;border-radius:999px;font-size:11px;font-weight:700;
+  cursor:pointer;border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text3);font-family:var(--mono);transition:all .15s;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.filter-collapse-btn:hover{color:var(--text);border-color:var(--accent)}
+.filter-chips-wrap{display:contents}
+.filter-chips-wrap.collapsed{display:none}
 .search-input{
   background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
   color:var(--text);font-family:var(--font);font-size:12px;
@@ -709,7 +718,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 .paste-textarea {
   flex:1;width:100%;border:none;outline:none;resize:none;
   background:var(--bg);color:var(--text);
-  font-family:var(--sans);font-size:13px;line-height:1.7;
+  font-family:var(--font);font-size:13px;line-height:1.7;
   padding:14px 16px;-webkit-overflow-scrolling:touch;
 }
 .paste-textarea::placeholder { color:var(--text3); }
@@ -809,7 +818,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.28</em></div>
+    <div class="logo" id="appLogo">PCT<em>//</em>Translator <em style="font-size:10px" id="topbarVer">v2.29</em></div>
 
     <div class="desktop-tabs">
       <button class="tab" onclick="switchTab('builder')" id="tab-builder">Builder <span class="tab-badge" id="badge-builder">0</span></button>
@@ -987,6 +996,8 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
       <div id="corpusFilterBar" class="filter-bar" style="display:none">
         <input type="text" class="search-input" placeholder="Search pairs…" oninput="_pairSearch=this.value.toLowerCase();renderPairList()" id="pairSearch">
+        <button class="filter-collapse-btn" id="corpusFilterToggle" onclick="toggleCorpusFilter()" title="Show/hide article filters">▾</button>
+        <div class="filter-chips-wrap" id="corpusChipsWrap"></div>
       </div>
       <div class="pair-list" id="pairList"></div>
     </div>
@@ -1003,15 +1014,18 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
       <div class="filter-bar">
         <input type="text" class="search-input" placeholder="Search phrases…" oninput="_phraseSearch=this.value.toLowerCase();renderPhrases()">
-        <button class="filter-chip active" onclick="setPhraseFilter('all',this)">All</button>
-        <button class="filter-chip" onclick="setPhraseFilter('verified',this)">✅ Verified</button>
-        <button class="filter-chip" onclick="setPhraseFilter('auto',this)">🔵 Auto</button>
-        <button class="filter-chip" onclick="setPhraseFilter('suggested',this)">🟡 Suggested</button>
-        <button class="filter-chip" onclick="setPhraseFilter('religious',this)">⛪ Religious</button>
-        <button class="filter-chip" onclick="setPhraseFilter('grammar',this)">📐 Grammar</button>
-        <button class="filter-chip" onclick="setPhraseFilter('common',this)">💬 Common</button>
-        <div id="sourceChips" style="display:contents"></div>
-        <button class="filter-chip" id="suggToggleBtn" onclick="toggleSuggestions(this)" style="margin-left:auto">🔍 Suggestions</button>
+        <button class="filter-collapse-btn" id="phraseFilterToggle" onclick="togglePhraseFilter()" title="Show/hide filters">▾</button>
+        <div class="filter-chips-wrap" id="phraseChipsWrap">
+          <button class="filter-chip active" onclick="setPhraseFilter('all',this)">All</button>
+          <button class="filter-chip" onclick="setPhraseFilter('verified',this)">✅ Verified</button>
+          <button class="filter-chip" onclick="setPhraseFilter('auto',this)">🔵 Auto</button>
+          <button class="filter-chip" onclick="setPhraseFilter('suggested',this)">🟡 Suggested</button>
+          <button class="filter-chip" onclick="setPhraseFilter('religious',this)">⛪ Religious</button>
+          <button class="filter-chip" onclick="setPhraseFilter('grammar',this)">📐 Grammar</button>
+          <button class="filter-chip" onclick="setPhraseFilter('common',this)">💬 Common</button>
+          <div id="sourceChips" style="display:contents"></div>
+          <button class="filter-chip" id="suggToggleBtn" onclick="toggleSuggestions(this)" style="margin-left:auto">🔍 Suggestions</button>
+        </div>
       </div>
 
       <div id="suggestionsSection" style="display:none"></div>
@@ -1317,7 +1331,7 @@ mark{background:rgba(76,175,145,.2);color:var(--accent);border-radius:3px;paddin
 
 <script>
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var APP_VERSION = 'v2.28';
+var APP_VERSION = 'v2.29';
 var LS_KEY = 'pct_v1';
 var APP = { corpus:[], phrases:[], suggestions:[], sessions:[], model:'claude', profile:null };
 var _granularity = 'paragraph';
@@ -1327,6 +1341,8 @@ var _phraseFilter = 'all';
 var _phraseSearch = '';
 var _pairSearch = '';
 var _preOpen = false;
+var _corpusFilterCollapsed = false;
+var _phraseFilterCollapsed = false;
 var _builderEn = [];   // parsed paragraphs from EN html
 var _builderPdt = [];  // parsed paragraphs from PDT html
 var _builderPairs = []; // aligned pairs ready to push
@@ -1358,10 +1374,10 @@ function applyProfile() {
   var logo = document.getElementById('appLogo');
   if (logo) {
     var code = slug.substring(0,3).toUpperCase();
-    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.28</em>';
+    logo.innerHTML = code + '<em>//</em>Translator <em style="font-size:10px">v2.29</em>';
   }
   // Update page title
-  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.28';
+  document.title = (p ? tName + ' Translator' : 'Parallel Corpus Translator') + ' v2.29';
   // Update all [TARGET_LANG] labels throughout the UI
   document.querySelectorAll('[data-lang="target"]').forEach(function(el){
     el.textContent = tName;
@@ -1458,7 +1474,7 @@ function populateConfirm() {
   document.getElementById('confIso').textContent = iso;
   document.getElementById('confHintEn').textContent = hintEn;
   document.getElementById('confHintT').textContent = hintT;
-  document.getElementById('confTitle').textContent = name + ' Translator v2.28';
+  document.getElementById('confTitle').textContent = name + ' Translator v2.29';
   var confRtlEl = document.getElementById('confRtl');
   if (confRtlEl) {
     var rtlChecked = document.getElementById('wizRtl') && document.getElementById('wizRtl').checked;
@@ -2362,32 +2378,21 @@ function renderCorpus() {
   var list = document.getElementById('pairList');
   if (!APP.corpus.length) { zone.style.display=''; fbar.style.display='none'; list.innerHTML=''; return; }
   zone.style.display='none'; fbar.style.display='flex';
-  // Article filter chips
+  // Article filter chips — build into the dedicated wrap div
+  var wrap = document.getElementById('corpusChipsWrap');
+  if (!wrap) { renderPairList(); return; }
   var articles = [...new Set(APP.corpus.map(function(p){return p.article;}))];
-  // Remove old art chips
-  fbar.querySelectorAll('.art-chip').forEach(function(c){c.remove();});
-  // Add All chip if not present
-  if (!fbar.querySelector('.all-chip')) {
-    var all = document.createElement('button');
-    all.className='filter-chip all-chip active';
-    all.textContent='All';
-    all.onclick=function(){_pairSearch='';document.getElementById('pairSearch').value='';renderPairList();document.querySelectorAll('#corpusFilterBar .filter-chip').forEach(function(c){c.classList.remove('active');});all.classList.add('active');};
-    fbar.insertBefore(all, fbar.firstChild);
-  }
+  var html = '<button class="filter-chip all-chip active" onclick="corpusFilterAll(this)">All</button>';
   articles.forEach(function(art) {
-    var chip = document.createElement('button');
-    chip.className='filter-chip art-chip';
-    chip.textContent=art;
-    chip.onclick=function(){
-      _pairSearch=''; document.getElementById('pairSearch').value='';
-      document.querySelectorAll('#corpusFilterBar .filter-chip').forEach(function(c){c.classList.remove('active');});
-      chip.classList.add('active');
-      var filtered = APP.corpus.filter(function(p){return p.article===art;});
-      var l = document.getElementById('pairList');
-      l.innerHTML = filtered.map(pairHTML).join('');
-    };
-    fbar.appendChild(chip);
+    html += '<button class="filter-chip art-chip" onclick="corpusFilterArt(this,\'' + art.replace(/'/g,"\\'") + '\')">' + esc(art) + '</button>';
   });
+  wrap.innerHTML = html;
+  // Restore collapse state
+  if (_corpusFilterCollapsed) {
+    wrap.classList.add('collapsed');
+    var btn = document.getElementById('corpusFilterToggle');
+    if (btn) btn.textContent = '▸';
+  }
   renderPairList();
 }
 
@@ -3894,15 +3899,16 @@ function statClick(type) {
     switchTab('corpus');
     _pairSearch = '';
     document.getElementById('pairSearch').value = '';
-    document.querySelectorAll('#corpusFilterBar .filter-chip').forEach(function(el){ el.classList.remove('active'); });
-    var allChip = document.querySelector('#corpusFilterBar .all-chip');
+    document.querySelectorAll('#corpusChipsWrap .filter-chip').forEach(function(el){ el.classList.remove('active'); });
+    var allChip = document.querySelector('#corpusChipsWrap .all-chip');
     if (allChip) allChip.classList.add('active');
     renderPairList();
     return;
   }
   if (type === 'articles') {
-    // Show corpus with filter bar visible, scroll to it
+    // Show corpus with filter bar visible and chips expanded
     switchTab('corpus');
+    if (_corpusFilterCollapsed) toggleCorpusFilter();
     var fbar = document.getElementById('corpusFilterBar');
     if (fbar) fbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
     toast('Tap an article chip to filter', 'inf');
@@ -3949,6 +3955,39 @@ function renderSourceChips() {
       '</button>';
   });
   container.innerHTML = html;
+}
+
+
+// ── FILTER COLLAPSE ───────────────────────────────────────────────────────────
+function toggleCorpusFilter() {
+  _corpusFilterCollapsed = !_corpusFilterCollapsed;
+  var wrap = document.getElementById('corpusChipsWrap');
+  var btn  = document.getElementById('corpusFilterToggle');
+  if (wrap) wrap.classList.toggle('collapsed', _corpusFilterCollapsed);
+  if (btn)  btn.textContent = _corpusFilterCollapsed ? '▸' : '▾';
+}
+
+function togglePhraseFilter() {
+  _phraseFilterCollapsed = !_phraseFilterCollapsed;
+  var wrap = document.getElementById('phraseChipsWrap');
+  var btn  = document.getElementById('phraseFilterToggle');
+  if (wrap) wrap.classList.toggle('collapsed', _phraseFilterCollapsed);
+  if (btn)  btn.textContent = _phraseFilterCollapsed ? '▸' : '▾';
+}
+
+function corpusFilterAll(el) {
+  _pairSearch = ''; document.getElementById('pairSearch').value = '';
+  document.querySelectorAll('#corpusChipsWrap .filter-chip').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');
+  renderPairList();
+}
+
+function corpusFilterArt(el, art) {
+  _pairSearch = ''; document.getElementById('pairSearch').value = '';
+  document.querySelectorAll('#corpusChipsWrap .filter-chip').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');
+  var l = document.getElementById('pairList');
+  l.innerHTML = APP.corpus.filter(function(p){return p.article===art;}).map(pairHTML).join('');
 }
 
 
@@ -4075,14 +4114,14 @@ function removeDictSource(source) {
 </script>
 
 <!-- HELP MODAL -->
-<div class="modal-overlay hidden" <div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
+<div class="modal-overlay hidden" id="helpModal" onclick="if(event.target===this)closeModal('helpModal')">
   <div class="modal" style="max-width:520px;padding:0;overflow:hidden;display:flex;flex-direction:column">
 
     <!-- Header with tab switcher -->
     <div style="padding:16px 18px 0;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:700;color:var(--text)">PCT Translator</div>
-        <div class="help-ver" style="margin:0"><span id="helpVer">v2.28</span></div>
+        <div class="help-ver" style="margin:0"><span id="helpVer">v2.29</span></div>
       </div>
       <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0">
         <button class="help-nav-btn active" id="hn-ref" onclick="helpNav('ref',this)" style="-webkit-tap-highlight-color:transparent;touch-action:manipulation">Reference</button>
@@ -4322,16 +4361,4 @@ function removeDictSource(source) {
 </div>
 
 </body>
-</html#pasteOverlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 400;
-  flex-direction: column;
-  overflow: hidden;
-}
-#pasteOverlay.open {
-  display: flex;
-}
->
+</html>
